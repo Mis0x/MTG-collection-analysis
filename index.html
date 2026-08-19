@@ -29,9 +29,6 @@
   body {
     margin: 0;
     background: var(--paper);
-    background-image:
-      linear-gradient(var(--line) 1px, transparent 1px);
-    background-size: 100% 2.4em;
     color: var(--ink);
     font-family: 'IBM Plex Sans', sans-serif;
     line-height: 1.5;
@@ -463,13 +460,39 @@
     display: none;
   }
   .card-preview.show { display: block; }
-  .card-preview img {
+  .card-preview-frame {
+    position: relative;
     width: 100%;
-    display: block;
+    aspect-ratio: 63 / 88;
     border-radius: 4.5% / 3.3%;
     box-shadow: 0 22px 50px rgba(0,0,0,0.5);
     background: var(--card);
+    overflow: hidden;
   }
+  .card-preview img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity 0.18s ease;
+  }
+  .card-preview img.loaded { opacity: 1; }
+  .card-preview-spinner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 34px;
+    height: 34px;
+    margin: -17px 0 0 -17px;
+    border: 3px solid var(--line);
+    border-top-color: var(--brass);
+    border-radius: 50%;
+    animation: card-spin 0.75s linear infinite;
+  }
+  .card-preview-frame.loaded .card-preview-spinner { display: none; }
+  @keyframes card-spin { to { transform: rotate(360deg); } }
   .card-preview-hint {
     display: none;
     margin-top: 10px;
@@ -592,6 +615,7 @@
 
   <div class="actions-row">
     <button class="btn" id="startBtn" disabled>Lancer l'analyse</button>
+    <button class="btn secondary" id="restoreSessionBtn" style="display:none;">Récupérer dernière session</button>
     <button class="btn secondary" id="clearCacheBtn">Vider le cache local</button>
     <span class="error-note" id="setupError"></span>
   </div>
@@ -646,7 +670,10 @@
 
 <div id="cardPreviewBackdrop"></div>
 <div class="card-preview" id="cardPreview">
-  <img id="cardPreviewImg" src="" alt="" />
+  <div class="card-preview-frame" id="cardPreviewFrame">
+    <div class="card-preview-spinner"></div>
+    <img id="cardPreviewImg" src="" alt="" />
+  </div>
   <div class="card-preview-hint">Touche à nouveau la carte pour ouvrir sa page EDHREC ↗</div>
 </div>
 
@@ -658,12 +685,15 @@
   // Config & état
   // ---------------------------------------------------------------------
   const DB_NAME = "moxfield_edhrec_cache";
-  const DB_VERSION = 1;
+  const DB_VERSION = 2;
   const STORE_CARDS = "cards";
   const STORE_COMMANDERS = "commanders";
+  const STORE_SESSION = "session";
   const CACHE_MAX_AGE_MS = 1000 * 60 * 60 * 24 * 30; // 30 jours
-  const CONCURRENCY = 5;
+  const FETCH_CONCURRENCY = 12; // requêtes cartes en parallèle pendant l'analyse principale
+  const REFINE_CONCURRENCY = 6; // requêtes commandants en parallèle pour le top N
   const REFINE_TOP_N = 20; // commandants pour lesquels on affine le % avec un 2e fetch
+  const MAX_RETRIES = 2; // nouvelles tentatives sur échec réseau transitoire
 
   const EDHREC_BASE = "https://json.edhrec.com";
 
@@ -679,6 +709,7 @@
     fileChip: $("fileChip"),
     minSample: $("minSample"),
     startBtn: $("startBtn"),
+    restoreSessionBtn: $("restoreSessionBtn"),
     clearCacheBtn: $("clearCacheBtn"),
     setupError: $("setupError"),
     progressPanel: $("progressPanel"),
@@ -716,6 +747,9 @@
         if (!_db.objectStoreNames.contains(STORE_COMMANDERS)) {
           _db.createObjectStore(STORE_COMMANDERS, { keyPath: "slug" });
         }
+        if (!_db.objectStoreNames.contains(STORE_SESSION)) {
+          _db.createObjectStore(STORE_SESSION, { keyPath: "key" });
+        }
       };
       req.onsuccess = () => resolve(req.result);
       req.onerror = () => reject(req.error);
@@ -745,9 +779,10 @@
   function idbClearAll() {
     return new Promise((resolve) => {
       if (!db) return resolve(false);
-      const tx = db.transaction([STORE_CARDS, STORE_COMMANDERS], "readwrite");
+      const tx = db.transaction([STORE_CARDS, STORE_COMMANDERS, STORE_SESSION], "readwrite");
       tx.objectStore(STORE_CARDS).clear();
       tx.objectStore(STORE_COMMANDERS).clear();
+      tx.objectStore(STORE_SESSION).clear();
       tx.oncomplete = () => resolve(true);
       tx.onerror = () => resolve(false);
     });
@@ -837,6 +872,10 @@
   // ---------------------------------------------------------------------
   // Fetch EDHREC en direct (avec cache + concurrence limitée)
   // ---------------------------------------------------------------------
+  function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
   async function fetchCardPage(slug) {
     const cached = await idbGet(STORE_CARDS, slug);
     if (cached && Date.now() - cached.fetchedAt < CACHE_MAX_AGE_MS) {
@@ -844,18 +883,25 @@
     }
 
     const url = EDHREC_BASE + "/pages/cards/" + encodeURIComponent(slug) + ".json";
-    try {
-      const res = await fetch(url);
-      if (res.status === 404) {
-        await idbSet(STORE_CARDS, { slug, data: null, notFound: true, fetchedAt: Date.now() });
-        return { data: null, fromCache: false, notFound: true };
+
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        const res = await fetch(url);
+        if (res.status === 404) {
+          await idbSet(STORE_CARDS, { slug, data: null, notFound: true, fetchedAt: Date.now() });
+          return { data: null, fromCache: false, notFound: true };
+        }
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const json = await res.json();
+        await idbSet(STORE_CARDS, { slug, data: json, notFound: false, fetchedAt: Date.now() });
+        return { data: json, fromCache: false, notFound: false };
+      } catch (err) {
+        if (attempt < MAX_RETRIES) {
+          await sleep(300 * (attempt + 1));
+          continue;
+        }
+        return { data: null, fromCache: false, notFound: false, error: String(err) };
       }
-      if (!res.ok) throw new Error("HTTP " + res.status);
-      const json = await res.json();
-      await idbSet(STORE_CARDS, { slug, data: json, notFound: false, fetchedAt: Date.now() });
-      return { data: json, fromCache: false, notFound: false };
-    } catch (err) {
-      return { data: null, fromCache: false, notFound: false, error: String(err) };
     }
   }
 
@@ -990,7 +1036,7 @@
       const data = await fetchCommanderPage(entry.slug);
       if (!data) return;
       entry.colorIdentity = extractColorIdentity(data);
-    }, CONCURRENCY, null);
+    }, REFINE_CONCURRENCY, null);
     return commanders;
   }
 
@@ -1090,10 +1136,15 @@
   // ---------------------------------------------------------------------
   // Progress UI
   // ---------------------------------------------------------------------
+  const LOG_MAX_LINES = 60;
+
   function logLine(msg) {
     const p = document.createElement("div");
     p.textContent = msg;
     els.progressLog.prepend(p);
+    while (els.progressLog.children.length > LOG_MAX_LINES) {
+      els.progressLog.removeChild(els.progressLog.lastChild);
+    }
   }
 
   // ---------------------------------------------------------------------
@@ -1117,6 +1168,7 @@
     let fromCache = 0;
     let found = 0;
     const notFoundNames = [];
+    const seenCommanders = new Set();
 
     els.progressLabel.textContent = "Récupération des pages EDHREC…";
 
@@ -1127,19 +1179,25 @@
         if (fc) fromCache++;
         if (data && !notFound) {
           found++;
+          for (const cv of extractCommanderLists(data)) {
+            if (cv.potential_decks >= minSample) {
+              seenCommanders.add(cv.sanitized || cv.slug || cv.name);
+            }
+          }
         } else {
           notFoundNames.push(item.name);
         }
         return { slug: item.slug, name: item.name, qty: item.qty, data };
       },
-      CONCURRENCY,
+      FETCH_CONCURRENCY,
       (done, total, item) => {
         els.progressCount.textContent = done + " / " + total;
         els.progressFill.style.width = Math.round((done / total) * 100) + "%";
-        if (done % 15 === 0 || done === total) logLine("→ " + item.name);
+        logLine("→ " + item.name);
         els.statCards.textContent = total;
         els.statFound.textContent = found;
         els.statCache.textContent = fromCache;
+        els.statCommanders.textContent = seenCommanders.size;
       }
     );
 
@@ -1186,6 +1244,7 @@
         els.fileChip.textContent = file.name + " · " + collection.size + " cartes uniques";
         els.startBtn.disabled = false;
         els.setupError.textContent = "";
+        saveSession(file.name);
       } catch (err) {
         els.setupError.textContent = "Erreur de lecture : " + err.message;
         els.startBtn.disabled = true;
@@ -1193,6 +1252,34 @@
     };
     reader.readAsText(file);
   }
+
+  async function saveSession(fileName) {
+    await idbSet(STORE_SESSION, {
+      key: "lastCollection",
+      fileName,
+      items: Array.from(collection.values()),
+      savedAt: Date.now(),
+    });
+  }
+
+  async function checkForSavedSession() {
+    const saved = await idbGet(STORE_SESSION, "lastCollection");
+    if (saved && saved.items && saved.items.length > 0) {
+      els.restoreSessionBtn.style.display = "inline-block";
+      els.restoreSessionBtn.textContent =
+        "Récupérer dernière session (" + saved.fileName + " · " + saved.items.length + " cartes)";
+    }
+  }
+
+  els.restoreSessionBtn.addEventListener("click", async () => {
+    const saved = await idbGet(STORE_SESSION, "lastCollection");
+    if (!saved || !saved.items) return;
+    collection = new Map(saved.items.map((it) => [it.slug, it]));
+    els.fileChip.style.display = "inline-block";
+    els.fileChip.textContent = saved.fileName + " · " + collection.size + " cartes uniques (session restaurée)";
+    els.startBtn.disabled = false;
+    els.setupError.textContent = "";
+  });
 
   els.dropzone.addEventListener("click", () => els.fileInput.click());
   els.fileInput.addEventListener("change", (e) => handleFile(e.target.files[0]));
@@ -1209,6 +1296,7 @@
   els.ownedFilter.addEventListener("change", renderResults);
   els.clearCacheBtn.addEventListener("click", async () => {
     await idbClearAll();
+    els.restoreSessionBtn.style.display = "none";
     logLine("Cache local vidé.");
   });
 
@@ -1216,6 +1304,7 @@
   // Aperçu carte au survol (desktop) / au premier tap (mobile)
   // -------------------------------------------------------------------
   const cardPreview = $("cardPreview");
+  const cardPreviewFrame = $("cardPreviewFrame");
   const cardPreviewImg = $("cardPreviewImg");
   const cardPreviewBackdrop = $("cardPreviewBackdrop");
   const supportsHover =
@@ -1226,7 +1315,17 @@
     return "https://api.scryfall.com/cards/named?fuzzy=" + encodeURIComponent(name) + "&format=image&version=large";
   }
 
+  cardPreviewImg.addEventListener("load", () => {
+    cardPreviewImg.classList.add("loaded");
+    cardPreviewFrame.classList.add("loaded");
+  });
+  cardPreviewImg.addEventListener("error", () => {
+    cardPreviewFrame.classList.add("loaded"); // arrête le spinner même en cas d'échec
+  });
+
   function showCardPreview(name, touchMode) {
+    cardPreviewImg.classList.remove("loaded");
+    cardPreviewFrame.classList.remove("loaded");
     cardPreviewImg.src = scryfallImageUrl(name);
     cardPreviewImg.alt = name;
     cardPreview.classList.add("show");
@@ -1267,7 +1366,10 @@
   });
   cardPreviewBackdrop.addEventListener("click", hideCardPreview);
 
-  openDb().then((_db) => { db = _db; }).catch(() => {
+  openDb().then((_db) => {
+    db = _db;
+    checkForSavedSession();
+  }).catch(() => {
     els.setupError.textContent = "IndexedDB indisponible : le cache local ne fonctionnera pas dans ce navigateur.";
   });
 })();
