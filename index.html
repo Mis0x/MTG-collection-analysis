@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Catalogue — Collection × EDHREC</title>
+<title>Correspondance — Collection Moxfield × EDHREC</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -66,51 +66,18 @@
   .masthead-title {
     font-family: 'Fraunces', serif;
     font-weight: 600;
-    font-size: clamp(28px, 4.2vw, 42px);
+    font-size: clamp(20px, 3.4vw, 30px);
     letter-spacing: -0.01em;
     margin: 0;
   }
   .masthead-title .accent { color: var(--brass-light); font-style: italic; font-weight: 500; }
-  .masthead-sub {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 12.5px;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--brass-light);
-    margin-top: 8px;
-  }
-  .ledger-index {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--paper-dim);
-    border: 1px solid rgba(248,244,227,0.25);
-    padding: 6px 10px;
-    white-space: nowrap;
-  }
 
   /* ---------- SECTION HEADINGS ---------- */
-  .section-tab {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 12px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--ledger);
-    background: var(--brass-light);
-    padding: 4px 12px 5px;
-    margin: 48px 0 0;
-    position: relative;
-    clip-path: polygon(0 0, 100% 0, 96% 100%, 0% 100%);
-  }
   h2.section-title {
     font-family: 'Fraunces', serif;
     font-size: 26px;
     font-weight: 600;
-    margin: 6px 0 4px;
+    margin: 48px 0 4px;
     border-bottom: 2px solid var(--ledger);
     padding-bottom: 12px;
   }
@@ -118,7 +85,7 @@
 
   /* ---------- EXPLICATION REPLIABLE ---------- */
   .help-panel {
-    margin-top: 16px;
+    margin-top: 40px;
     border: 1.5px solid var(--line);
     background: var(--card);
   }
@@ -462,6 +429,59 @@
   .cc-cards-list .row .lift { color: var(--brass); font-weight: 600; }
   .cc-cards-list .row a { color: var(--ink); text-decoration: none; border-bottom: 1px dotted var(--ink-soft); }
   .cc-cards-list .row a:hover { border-bottom-style: solid; color: var(--ledger); }
+  .cc-cards-rest { display: none; }
+  .cc-cards-rest.show { display: block; }
+  .cc-cards-more {
+    display: block;
+    margin-top: 8px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--brass);
+    background: none;
+    border: none;
+    border-bottom: 1px dotted var(--brass);
+    cursor: pointer;
+    padding: 0;
+  }
+  .cc-cards-more:hover { border-bottom-style: solid; }
+
+  /* ---------- APERÇU CARTE (hover / tap) ---------- */
+  #cardPreviewBackdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(22, 40, 31, 0.6);
+    z-index: 999;
+    display: none;
+  }
+  .card-preview {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1000;
+    width: min(400px, 88vw);
+    display: none;
+  }
+  .card-preview.show { display: block; }
+  .card-preview img {
+    width: 100%;
+    display: block;
+    border-radius: 4.5% / 3.3%;
+    box-shadow: 0 22px 50px rgba(0,0,0,0.5);
+    background: var(--card);
+  }
+  .card-preview-hint {
+    display: none;
+    margin-top: 10px;
+    text-align: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--paper);
+    background: var(--ledger);
+    padding: 7px 10px;
+  }
+  .card-preview.touch-mode { pointer-events: auto; }
+  .card-preview.touch-mode .card-preview-hint { display: block; }
 
   /* ---------- STAMP ---------- */
   .stamp {
@@ -524,18 +544,12 @@
 <header class="masthead">
   <div class="masthead-inner">
     <div>
-      <p class="masthead-title">Catalogue <span class="accent">de brew</span></p>
-      <p class="masthead-sub">Collection Moxfield × EDHREC</p>
+      <p class="masthead-title">Correspondance Collection Moxfield × EDHREC</p>
     </div>
-    <div class="ledger-index" id="ledgerIndex">Fiche n° — · non classée</div>
   </div>
 </header>
 
 <div class="wrap">
-
-  <span class="section-tab">Étape 1</span>
-  <h2 class="section-title">Déposer l'export Moxfield</h2>
-  <p class="section-note">Exporte ta collection depuis Moxfield au format CSV (Collection → Export), puis dépose le fichier ici. Rien n'est envoyé sur un serveur : le fichier est lu directement dans ton navigateur.</p>
 
   <details class="help-panel">
     <summary>Comment ça marche, et comment exporter mon CSV Moxfield</summary>
@@ -545,7 +559,7 @@
         <li>Va sur <code>moxfield.com</code> et ouvre ta <strong>Collection</strong>.</li>
         <li>Clique sur le bouton <strong>Export</strong>.</li>
         <li>Choisis le format <strong>CSV</strong> et télécharge le fichier.</li>
-        <li>Dépose ce fichier tel quel ci-dessous — l'app détecte automatiquement les colonnes utiles (nom de carte, quantité), quel que soit leur ordre.</li>
+        <li>Dépose ce fichier tel quel ci-dessous — l'app détecte automatiquement les colonnes utiles, quel que soit leur ordre.</li>
       </ol>
 
       <h4>Ce que fait l'outil</h4>
@@ -553,12 +567,14 @@
       <p>Ces scores sont additionnés par commandant, ce qui permet de classer les commandants selon la quantité de cartes de ta collection qui leur sont statistiquement liées.</p>
 
       <h4>Ce que le résultat ne dit pas</h4>
-      <p>L'app ne propose pas de decklist complète ni un % de complétion par rapport à une liste type — volontairement, pour ne pas te limiter aux cartes déjà populaires et te faire passer à côté de pépites plus confidentielles de ta collection. Le nombre de cartes affiché pour chaque commandant est un signal ("voici où ta collection est déjà utile"), pas une garantie que ces cartes forment ensemble un deck cohérent et jouable tel quel.</p>
+      <p>L'app ne propose pas de decklist complète ni un % de complétion par rapport à une liste type — volontairement, pour ne pas te limiter aux cartes déjà populaires et te faire passer à côté de pépites plus confidentielles de ta collection. Le score de synergie indique où ta collection est déjà utile, pas une garantie que ces cartes forment ensemble un deck cohérent et jouable tel quel.</p>
 
       <h4>Confidentialité</h4>
       <p>Aucune donnée n'est envoyée à un serveur autre qu'EDHREC lui-même. Le fichier CSV est lu et analysé entièrement dans ton navigateur ; les résultats sont mis en cache localement (IndexedDB) pour accélérer les prochaines analyses.</p>
     </div>
   </details>
+
+  <h2 class="section-title">Déposer l'export Moxfield</h2>
 
   <div class="dropzone" id="dropzone">
     <input type="file" id="fileInput" accept=".csv" />
@@ -596,9 +612,16 @@
     <div class="stat-box"><div class="stat-num" id="statCache">—</div><div class="stat-label">Servies depuis le cache</div></div>
   </div>
 
-  <span class="section-tab" id="resultsTab" style="display:none;">Étape 2</span>
+  <details class="help-panel" id="notFoundPanel" style="display:none;">
+    <summary id="notFoundSummary">Cartes non trouvées sur EDHREC</summary>
+    <div class="help-body">
+      <p>Ces cartes n'ont renvoyé aucune donnée EDHREC — jetons/émblèmes/produits scellés présents dans l'export, nom mal reconnu (accents ou caractères spéciaux), carte trop confidentielle pour être indexée, ou simple raté réseau ponctuel. Relance l'analyse pour écarter cette dernière hypothèse.</p>
+      <ul id="notFoundList"></ul>
+    </div>
+  </details>
+
   <h2 class="section-title" id="resultsTitle" style="display:none;">Fiches commandants</h2>
-  <p class="section-note" id="resultsNote" style="display:none;">Classées par score de synergie : la somme, pour chaque commandant, du <em>lift</em> de tes cartes qui lui sont statistiquement associées (bien au-delà de leur taux de jeu moyen). Un score élevé = beaucoup de tes cartes de niche collent précisément à ce commandant. Le nombre de cartes indiqué est celui de tes cartes en collection ayant une forte présence avec ce commandant — pas une comparaison avec une decklist type.</p>
+  <p class="section-note" id="resultsNote" style="display:none;">Classées par score de synergie : la somme, pour chaque commandant, du <em>lift</em> de tes cartes qui lui sont statistiquement associées (bien au-delà de leur taux de jeu moyen). Un score élevé = beaucoup de tes cartes de niche collent précisément à ce commandant — pas une comparaison avec une decklist type.</p>
 
   <div class="filter-bar" id="filterBar">
     <label>Trier</label>
@@ -618,8 +641,14 @@
 </div>
 
 <footer>
-  Outil personnel — données EDHREC via proxy Cloudflare. Aucune donnée de collection n'est stockée ailleurs que dans ton navigateur (IndexedDB / localStorage).
+  Outil personnel — les requêtes vers EDHREC partent directement de ton navigateur. Aucune donnée de collection n'est stockée ailleurs que dans ton navigateur (IndexedDB / localStorage).
 </footer>
+
+<div id="cardPreviewBackdrop"></div>
+<div class="card-preview" id="cardPreview">
+  <img id="cardPreviewImg" src="" alt="" />
+  <div class="card-preview-hint">Touche à nouveau la carte pour ouvrir sa page EDHREC ↗</div>
+</div>
 
 <script>
 (function () {
@@ -662,14 +691,15 @@
     statFound: $("statFound"),
     statCommanders: $("statCommanders"),
     statCache: $("statCache"),
-    resultsTab: $("resultsTab"),
+    notFoundPanel: $("notFoundPanel"),
+    notFoundSummary: $("notFoundSummary"),
+    notFoundList: $("notFoundList"),
     resultsTitle: $("resultsTitle"),
     resultsNote: $("resultsNote"),
     filterBar: $("filterBar"),
     sortSelect: $("sortSelect"),
     ownedFilter: $("ownedFilter"),
     results: $("results"),
-    ledgerIndex: $("ledgerIndex"),
   };
 
   // ---------------------------------------------------------------------
@@ -1001,13 +1031,15 @@
       const stampValue = c.matches.length;
       const stampUnit = c.matches.length > 1 ? "cartes liées" : "carte liée";
 
-      const matchRows = c.matches
-        .slice(0, 30)
-        .map(
-          (m) =>
-            `<div class="row"><span><a href="${m.cardUrl}" target="_blank" rel="noopener">${escapeHtml(m.cardName)}</a></span><span class="lift">×${m.lift.toFixed(1)}</span></div>`
-        )
-        .join("");
+      const INITIAL_VISIBLE = 30;
+      const visibleMatches = c.matches.slice(0, INITIAL_VISIBLE);
+      const restMatches = c.matches.slice(INITIAL_VISIBLE);
+
+      const rowHtml = (m) =>
+        `<div class="row"><span><a class="card-hover-link" href="${m.cardUrl}" target="_blank" rel="noopener" data-card="${escapeHtml(m.cardName)}">${escapeHtml(m.cardName)}</a></span><span class="lift">×${m.lift.toFixed(1)}</span></div>`;
+
+      const matchRows = visibleMatches.map(rowHtml).join("");
+      const restRows = restMatches.map(rowHtml).join("");
 
       card.innerHTML = `
         <div class="tab"></div>
@@ -1020,7 +1052,10 @@
           </div>
           <div class="cc-meta">Score de synergie : ${c.totalLift.toFixed(1)} · ${c.matches.length} carte(s) de ta collection associée(s) à ce commandant</div>
           <button class="cc-cards-toggle" type="button">Voir les cartes associées ↓</button>
-          <div class="cc-cards-list">${matchRows}</div>
+          <div class="cc-cards-list">
+            ${matchRows}
+            ${restMatches.length > 0 ? `<div class="cc-cards-rest">${restRows}</div><button class="cc-cards-more" type="button">Voir ${restMatches.length} carte(s) de plus ↓</button>` : ""}
+          </div>
         </div>
         <div class="stamp"><span class="n">${stampValue}</span><span class="u">${stampUnit}</span></div>
       `;
@@ -1033,6 +1068,14 @@
           ? "Masquer les cartes associées ↑"
           : "Voir les cartes associées ↓";
       });
+
+      const moreBtn = card.querySelector(".cc-cards-more");
+      if (moreBtn) {
+        moreBtn.addEventListener("click", () => {
+          card.querySelector(".cc-cards-rest").classList.add("show");
+          moreBtn.remove();
+        });
+      }
 
       els.results.appendChild(card);
     });
@@ -1073,6 +1116,7 @@
     const items = Array.from(collection.values());
     let fromCache = 0;
     let found = 0;
+    const notFoundNames = [];
 
     els.progressLabel.textContent = "Récupération des pages EDHREC…";
 
@@ -1081,7 +1125,11 @@
       async (item) => {
         const { data, fromCache: fc, notFound } = await fetchCardPage(item.slug);
         if (fc) fromCache++;
-        if (data && !notFound) found++;
+        if (data && !notFound) {
+          found++;
+        } else {
+          notFoundNames.push(item.name);
+        }
         return { slug: item.slug, name: item.name, qty: item.qty, data };
       },
       CONCURRENCY,
@@ -1105,13 +1153,24 @@
     els.progressLabel.textContent = "Terminé.";
     els.progressFill.style.width = "100%";
 
-    els.resultsTab.style.display = "inline-flex";
+    if (notFoundNames.length > 0) {
+      els.notFoundPanel.style.display = "block";
+      els.notFoundSummary.textContent = notFoundNames.length + " carte(s) non trouvée(s) sur EDHREC";
+      els.notFoundList.innerHTML = notFoundNames
+        .slice()
+        .sort((a, b) => a.localeCompare(b))
+        .map((n) => "<li>" + escapeHtml(n) + "</li>")
+        .join("");
+    } else {
+      els.notFoundPanel.style.display = "none";
+    }
+
     els.resultsTitle.style.display = "block";
     els.resultsNote.style.display = "block";
     els.filterBar.classList.add("show");
 
     renderResults();
-    document.getElementById("resultsTab").scrollIntoView({ behavior: "smooth", block: "start" });
+    els.resultsTitle.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   // ---------------------------------------------------------------------
@@ -1126,7 +1185,6 @@
         els.fileChip.style.display = "inline-block";
         els.fileChip.textContent = file.name + " · " + collection.size + " cartes uniques";
         els.startBtn.disabled = false;
-        els.ledgerIndex.textContent = "Fiche n° " + Math.floor(Math.random() * 9000 + 1000) + " · en attente d'analyse";
         els.setupError.textContent = "";
       } catch (err) {
         els.setupError.textContent = "Erreur de lecture : " + err.message;
@@ -1153,6 +1211,61 @@
     await idbClearAll();
     logLine("Cache local vidé.");
   });
+
+  // -------------------------------------------------------------------
+  // Aperçu carte au survol (desktop) / au premier tap (mobile)
+  // -------------------------------------------------------------------
+  const cardPreview = $("cardPreview");
+  const cardPreviewImg = $("cardPreviewImg");
+  const cardPreviewBackdrop = $("cardPreviewBackdrop");
+  const supportsHover =
+    window.matchMedia && window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+  let armedLink = null;
+
+  function scryfallImageUrl(name) {
+    return "https://api.scryfall.com/cards/named?fuzzy=" + encodeURIComponent(name) + "&format=image&version=large";
+  }
+
+  function showCardPreview(name, touchMode) {
+    cardPreviewImg.src = scryfallImageUrl(name);
+    cardPreviewImg.alt = name;
+    cardPreview.classList.add("show");
+    cardPreview.classList.toggle("touch-mode", !!touchMode);
+    cardPreviewBackdrop.style.display = touchMode ? "block" : "none";
+  }
+
+  function hideCardPreview() {
+    cardPreview.classList.remove("show", "touch-mode");
+    cardPreviewBackdrop.style.display = "none";
+    armedLink = null;
+  }
+
+  // Délégation d'événements : les liens de cartes sont recréés à chaque rendu
+  els.results.addEventListener("mouseover", (e) => {
+    if (!supportsHover) return;
+    const link = e.target.closest(".card-hover-link");
+    if (link) showCardPreview(link.dataset.card, false);
+  });
+  els.results.addEventListener("mouseout", (e) => {
+    if (!supportsHover) return;
+    const link = e.target.closest(".card-hover-link");
+    if (link) hideCardPreview();
+  });
+  els.results.addEventListener("click", (e) => {
+    if (supportsHover) return; // souris réelle : le survol suffit, clic = navigation normale
+    const link = e.target.closest(".card-hover-link");
+    if (!link) return;
+    if (armedLink === link) {
+      // deuxième tap sur la même carte : on laisse la navigation se faire
+      armedLink = null;
+      hideCardPreview();
+      return;
+    }
+    e.preventDefault();
+    armedLink = link;
+    showCardPreview(link.dataset.card, true);
+  });
+  cardPreviewBackdrop.addEventListener("click", hideCardPreview);
 
   openDb().then((_db) => { db = _db; }).catch(() => {
     els.setupError.textContent = "IndexedDB indisponible : le cache local ne fonctionnera pas dans ce navigateur.";
