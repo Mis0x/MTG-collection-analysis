@@ -131,6 +131,39 @@
     border: 1px solid var(--line);
   }
 
+  #notFoundList {
+    list-style: none;
+    padding-left: 0;
+  }
+  #notFoundList li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+  }
+  #notFoundList li a { color: var(--ink); text-decoration: none; border-bottom: 1px dotted var(--ink-soft); }
+  #notFoundList li a:hover { border-bottom-style: solid; color: var(--ledger); }
+  .retry-card-btn {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    line-height: 1;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    color: var(--ledger);
+    cursor: pointer;
+    padding: 3px 7px;
+    flex-shrink: 0;
+  }
+  .retry-card-btn:hover:not(:disabled) { background: var(--brass-light); }
+  .retry-card-btn:disabled { cursor: default; opacity: 0.6; }
+  .retry-card-btn.spinning { animation: card-spin 0.7s linear infinite; }
+  .retry-status {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--stamp-red);
+  }
+
   /* ---------- DROPZONE ---------- */
   .dropzone {
     margin-top: 22px;
@@ -539,6 +572,10 @@
     color: var(--stamp-red);
     margin-top: 10px;
   }
+  .load-more-btn {
+    display: block;
+    margin: 8px auto 0;
+  }
 
   footer {
     max-width: 1040px;
@@ -633,13 +670,14 @@
     <div class="stat-box"><div class="stat-num" id="statCards">—</div><div class="stat-label">Cartes uniques</div></div>
     <div class="stat-box"><div class="stat-num" id="statFound">—</div><div class="stat-label">Trouvées sur EDHREC</div></div>
     <div class="stat-box"><div class="stat-num" id="statCommanders">—</div><div class="stat-label">Commandants candidats</div></div>
+    <div class="stat-box"><div class="stat-num" id="statOwnedCommanders">—</div><div class="stat-label">Commandants déjà en collection</div></div>
     <div class="stat-box"><div class="stat-num" id="statCache">—</div><div class="stat-label">Servies depuis le cache</div></div>
   </div>
 
   <details class="help-panel" id="notFoundPanel" style="display:none;">
     <summary id="notFoundSummary">Cartes non trouvées sur EDHREC</summary>
     <div class="help-body">
-      <p>Ces cartes n'ont renvoyé aucune donnée EDHREC — jetons/émblèmes/produits scellés présents dans l'export, nom mal reconnu (accents ou caractères spéciaux), carte trop confidentielle pour être indexée, ou simple raté réseau ponctuel. Relance l'analyse pour écarter cette dernière hypothèse.</p>
+      <p>Ces cartes n'ont renvoyé aucune donnée EDHREC — jetons/emblèmes/produits scellés présents dans l'export, nom mal reconnu (accents ou caractères spéciaux), carte trop confidentielle pour être indexée, ou simple raté réseau ponctuel. Relance l'analyse pour écarter cette dernière hypothèse.</p>
       <ul id="notFoundList"></ul>
     </div>
   </details>
@@ -665,7 +703,7 @@
 </div>
 
 <footer>
-  Outil personnel — les requêtes vers EDHREC partent directement de ton navigateur. Aucune donnée de collection n'est stockée ailleurs que dans ton navigateur (IndexedDB / localStorage).
+  Outil personnel — les requêtes vers EDHREC partent directement de ton navigateur. Aucune donnée de collection n'est stockée ailleurs que dans ton navigateur (IndexedDB).
 </footer>
 
 <div id="cardPreviewBackdrop"></div>
@@ -700,6 +738,8 @@
   let db = null;
   let collection = new Map(); // slug -> { name, qty }
   let allCommanders = []; // résultats agrégés
+  let lastFetchResults = []; // résultats bruts de la dernière analyse (pour ré-agréger après un retry)
+  let lastMinSample = 0;
 
   const $ = (id) => document.getElementById(id);
 
@@ -721,6 +761,7 @@
     statCards: $("statCards"),
     statFound: $("statFound"),
     statCommanders: $("statCommanders"),
+    statOwnedCommanders: $("statOwnedCommanders"),
     statCache: $("statCache"),
     notFoundPanel: $("notFoundPanel"),
     notFoundSummary: $("notFoundSummary"),
@@ -771,6 +812,16 @@
       if (!db) return resolve(null);
       const tx = db.transaction(store, "readwrite");
       tx.objectStore(store).put(value);
+      tx.oncomplete = () => resolve(true);
+      tx.onerror = () => resolve(false);
+    });
+  }
+
+  function idbDelete(store, key) {
+    return new Promise((resolve) => {
+      if (!db) return resolve(false);
+      const tx = db.transaction(store, "readwrite");
+      tx.objectStore(store).delete(key);
       tx.oncomplete = () => resolve(true);
       tx.onerror = () => resolve(false);
     });
@@ -971,8 +1022,15 @@
     return null;
   }
 
+  const WUBRG_ORDER = ["W", "U", "B", "R", "G"];
+  function sortColorIdentity(colors) {
+    return Array.from(new Set(colors)).sort(
+      (a, b) => WUBRG_ORDER.indexOf(a) - WUBRG_ORDER.indexOf(b)
+    );
+  }
+
   function aggregate(cardResults, minSample) {
-    // commanderSlug -> { name, url, colorIdentity, totalLift, matches: [] }
+    // commanderSlug -> { name, url, colorIdentity, totalLift, totalDecksSample, matches: [] }
     const byCommander = new Map();
 
     for (const { slug, name, qty, data } of cardResults) {
@@ -980,6 +1038,7 @@
       const globalRate = extractGlobalRate(data);
       if (!globalRate || globalRate <= 0) continue;
       const commanders = extractCommanderLists(data);
+      const ownCardColors = extractColorIdentity(data);
 
       for (const cv of commanders) {
         if (cv.potential_decks < minSample) continue;
@@ -994,11 +1053,15 @@
             name: cv.name,
             url: "https://edhrec.com" + (cv.url || "/commanders/" + key),
             totalLift: 0,
+            totalDecksSample: 0,
+            colorIdentitySet: new Set(),
             matches: [],
           });
         }
         const entry = byCommander.get(key);
         entry.totalLift += lift;
+        entry.totalDecksSample = Math.max(entry.totalDecksSample, cv.potential_decks || 0);
+        for (const col of ownCardColors) entry.colorIdentitySet.add(col);
         entry.matches.push({
           cardName: name,
           cardUrl: "https://edhrec.com/cards/" + slug,
@@ -1015,6 +1078,12 @@
     for (const e of arr) {
       e.matches.sort((a, b) => b.lift - a.lift);
       e.isOwned = collection.has(e.slug);
+      // Identité couleur inférée par défaut : union des couleurs des cartes
+      // de ta collection associées. C'est une approximation (le vrai commandant
+      // peut avoir des couleurs non représentées si tu n'as aucune carte dans
+      // cette couleur pour lui) — remplacée par la valeur exacte pour le top
+      // affiché via refineColors().
+      e.colorIdentity = sortColorIdentity(Array.from(e.colorIdentitySet));
     }
     arr.sort((a, b) => b.totalLift - a.totalLift);
     return arr;
@@ -1028,8 +1097,8 @@
     }
   }
 
-  // Récupère l'identité couleur du top N de commandants (seule donnée qu'il
-  // manque encore, la taille de deck étant fixe et connue à l'avance).
+  // Remplace l'identité couleur inférée (approximative) par la valeur exacte
+  // pour le top N affiché, via un second appel dédié à la page du commandant.
   async function refineColors(commanders, n) {
     const top = commanders.slice(0, n);
     await runPool(top, async (entry) => {
@@ -1044,6 +1113,9 @@
   // Rendu
   // ---------------------------------------------------------------------
   const PIP_COLORS = { W: "var(--w)", U: "var(--u)", B: "var(--b)", R: "var(--r)", G: "var(--g)" };
+
+  let visibleCommanderCount = 60;
+  const COMMANDER_PAGE_SIZE = 60;
 
   function renderResults() {
     const sortBy = els.sortSelect.value;
@@ -1066,7 +1138,9 @@
       return;
     }
 
-    list.slice(0, 60).forEach((c, i) => {
+    const visibleList = list.slice(0, visibleCommanderCount);
+
+    visibleList.forEach((c, i) => {
       const card = document.createElement("div");
       card.className = "commander-card" + (c.isOwned ? " owned" : "");
 
@@ -1087,6 +1161,10 @@
       const matchRows = visibleMatches.map(rowHtml).join("");
       const restRows = restMatches.map(rowHtml).join("");
 
+      const deckCountText = c.totalDecksSample
+        ? c.totalDecksSample.toLocaleString("fr-FR") + " deck(s) recensés sur EDHREC"
+        : "";
+
       card.innerHTML = `
         <div class="tab"></div>
         <div>
@@ -1096,7 +1174,7 @@
             <span class="cc-pips">${pips}</span>
             ${c.isOwned ? '<span class="cc-owned-flag">Déjà en collection</span>' : ""}
           </div>
-          <div class="cc-meta">Score de synergie : ${c.totalLift.toFixed(1)} · ${c.matches.length} carte(s) de ta collection associée(s) à ce commandant</div>
+          <div class="cc-meta">Score de synergie : ${c.totalLift.toFixed(1)} · ${c.matches.length} carte(s) de ta collection associée(s)${deckCountText ? " · " + deckCountText : ""}</div>
           <button class="cc-cards-toggle" type="button">Voir les cartes associées ↓</button>
           <div class="cc-cards-list">
             ${matchRows}
@@ -1125,7 +1203,91 @@
 
       els.results.appendChild(card);
     });
+
+    if (list.length > visibleCommanderCount) {
+      const remaining = list.length - visibleCommanderCount;
+      const loadMoreBtn = document.createElement("button");
+      loadMoreBtn.className = "btn secondary load-more-btn";
+      loadMoreBtn.type = "button";
+      loadMoreBtn.textContent =
+        "Voir " + Math.min(COMMANDER_PAGE_SIZE, remaining) + " commandant(s) de plus (" + remaining + " restant(s))";
+      loadMoreBtn.addEventListener("click", () => {
+        visibleCommanderCount += COMMANDER_PAGE_SIZE;
+        renderResults();
+      });
+      els.results.appendChild(loadMoreBtn);
+    }
   }
+
+  function scryfallSearchUrl(name) {
+    return "https://scryfall.com/search?q=" + encodeURIComponent('!"' + name + '"');
+  }
+
+  function renderNotFoundList(notFoundItems) {
+    if (notFoundItems.length === 0) {
+      els.notFoundPanel.style.display = "none";
+      els.notFoundList.innerHTML = "";
+      return;
+    }
+    els.notFoundPanel.style.display = "block";
+    els.notFoundSummary.textContent = notFoundItems.length + " carte(s) non trouvée(s) sur EDHREC";
+    els.notFoundList.innerHTML = notFoundItems
+      .slice()
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .map(
+        (it) => `
+        <li data-slug="${escapeHtml(it.slug)}">
+          <a class="card-hover-link" href="${scryfallSearchUrl(it.name)}" target="_blank" rel="noopener" data-card="${escapeHtml(it.name)}">${escapeHtml(it.name)}</a>
+          <button class="retry-card-btn" type="button" title="Réessayer cette carte" aria-label="Réessayer cette carte">↻</button>
+          <span class="retry-status"></span>
+        </li>`
+      )
+      .join("");
+  }
+
+  async function retryNotFoundCard(li) {
+    const slug = li.dataset.slug;
+    const nameLink = li.querySelector("a");
+    const name = nameLink.dataset.card;
+    const btn = li.querySelector(".retry-card-btn");
+    const status = li.querySelector(".retry-status");
+
+    btn.disabled = true;
+    btn.classList.add("spinning");
+    status.textContent = "";
+
+    await idbDelete(STORE_CARDS, slug);
+    const { data, notFound } = await fetchCardPage(slug);
+
+    btn.classList.remove("spinning");
+
+    const idx = lastFetchResults.findIndex((r) => r.slug === slug);
+    if (idx !== -1) lastFetchResults[idx].data = data;
+
+    if (data && !notFound) {
+      li.remove();
+      const remaining = els.notFoundList.querySelectorAll("li").length;
+      if (remaining === 0) {
+        els.notFoundPanel.style.display = "none";
+      } else {
+        els.notFoundSummary.textContent = remaining + " carte(s) non trouvée(s) sur EDHREC";
+      }
+      // Ré-agrège avec la carte nouvellement trouvée et rafraîchit l'affichage
+      allCommanders = aggregate(lastFetchResults, lastMinSample);
+      await refineColors(allCommanders, REFINE_TOP_N);
+      visibleCommanderCount = 60;
+      renderResults();
+    } else {
+      btn.disabled = false;
+      status.textContent = "toujours introuvable";
+    }
+  }
+
+  els.notFoundList.addEventListener("click", (e) => {
+    const btn = e.target.closest(".retry-card-btn");
+    if (!btn) return;
+    retryNotFoundCard(btn.closest("li"));
+  });
 
   function escapeHtml(s) {
     const d = document.createElement("div");
@@ -1167,8 +1329,9 @@
     const items = Array.from(collection.values());
     let fromCache = 0;
     let found = 0;
-    const notFoundNames = [];
+    const notFoundItems = [];
     const seenCommanders = new Set();
+    const ownedCommanderSlugs = new Set();
 
     els.progressLabel.textContent = "Récupération des pages EDHREC…";
 
@@ -1179,13 +1342,21 @@
         if (fc) fromCache++;
         if (data && !notFound) {
           found++;
+          // Toute carte listée comme jouée par un commandant est, par
+          // construction, un commandant reconnu par EDHREC. On vérifie donc
+          // ici (sans filtrage par échantillon minimum, non pertinent pour
+          // cette question) si l'un d'eux correspond à une carte que tu
+          // possèdes déjà — c'est ainsi qu'on détecte un commandant en
+          // collection sans se limiter aux seules créatures légendaires
+          // (fond de fusion Partenaire, Background, planeswalker-commandant…
+          // sont couverts de la même façon).
           for (const cv of extractCommanderLists(data)) {
-            if (cv.potential_decks >= minSample) {
-              seenCommanders.add(cv.sanitized || cv.slug || cv.name);
-            }
+            const cSlug = cv.sanitized || cv.slug || cv.name;
+            if (cv.potential_decks >= minSample) seenCommanders.add(cSlug);
+            if (collection.has(cSlug)) ownedCommanderSlugs.add(cSlug);
           }
         } else {
-          notFoundNames.push(item.name);
+          notFoundItems.push({ name: item.name, slug: item.slug });
         }
         return { slug: item.slug, name: item.name, qty: item.qty, data };
       },
@@ -1198,8 +1369,12 @@
         els.statFound.textContent = found;
         els.statCache.textContent = fromCache;
         els.statCommanders.textContent = seenCommanders.size;
+        els.statOwnedCommanders.textContent = ownedCommanderSlugs.size;
       }
     );
+
+    lastFetchResults = results;
+    lastMinSample = minSample;
 
     els.progressLabel.textContent = "Agrégation des scores…";
     allCommanders = aggregate(results, minSample);
@@ -1208,25 +1383,17 @@
     await refineColors(allCommanders, REFINE_TOP_N);
 
     els.statCommanders.textContent = allCommanders.length;
+    els.statOwnedCommanders.textContent = ownedCommanderSlugs.size;
     els.progressLabel.textContent = "Terminé.";
     els.progressFill.style.width = "100%";
 
-    if (notFoundNames.length > 0) {
-      els.notFoundPanel.style.display = "block";
-      els.notFoundSummary.textContent = notFoundNames.length + " carte(s) non trouvée(s) sur EDHREC";
-      els.notFoundList.innerHTML = notFoundNames
-        .slice()
-        .sort((a, b) => a.localeCompare(b))
-        .map((n) => "<li>" + escapeHtml(n) + "</li>")
-        .join("");
-    } else {
-      els.notFoundPanel.style.display = "none";
-    }
+    renderNotFoundList(notFoundItems);
 
     els.resultsTitle.style.display = "block";
     els.resultsNote.style.display = "block";
     els.filterBar.classList.add("show");
 
+    visibleCommanderCount = 60;
     renderResults();
     els.resultsTitle.scrollIntoView({ behavior: "smooth", block: "start" });
   }
@@ -1292,8 +1459,8 @@
   els.dropzone.addEventListener("drop", (e) => handleFile(e.dataTransfer.files[0]));
 
   els.startBtn.addEventListener("click", startAnalysis);
-  els.sortSelect.addEventListener("change", renderResults);
-  els.ownedFilter.addEventListener("change", renderResults);
+  els.sortSelect.addEventListener("change", () => { visibleCommanderCount = 60; renderResults(); });
+  els.ownedFilter.addEventListener("change", () => { visibleCommanderCount = 60; renderResults(); });
   els.clearCacheBtn.addEventListener("click", async () => {
     await idbClearAll();
     els.restoreSessionBtn.style.display = "none";
@@ -1339,18 +1506,20 @@
     armedLink = null;
   }
 
-  // Délégation d'événements : les liens de cartes sont recréés à chaque rendu
-  els.results.addEventListener("mouseover", (e) => {
+  // Délégation d'événements sur tout le document : les liens de cartes sont
+  // recréés dynamiquement à la fois dans les résultats et dans la liste des
+  // cartes non trouvées.
+  document.body.addEventListener("mouseover", (e) => {
     if (!supportsHover) return;
     const link = e.target.closest(".card-hover-link");
     if (link) showCardPreview(link.dataset.card, false);
   });
-  els.results.addEventListener("mouseout", (e) => {
+  document.body.addEventListener("mouseout", (e) => {
     if (!supportsHover) return;
     const link = e.target.closest(".card-hover-link");
     if (link) hideCardPreview();
   });
-  els.results.addEventListener("click", (e) => {
+  document.body.addEventListener("click", (e) => {
     if (supportsHover) return; // souris réelle : le survol suffit, clic = navigation normale
     const link = e.target.closest(".card-hover-link");
     if (!link) return;
