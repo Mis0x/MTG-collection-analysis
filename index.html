@@ -4,6 +4,15 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Correspondance — Collection Moxfield × EDHREC</title>
+<script>
+  (function () {
+    try {
+      var saved = localStorage.getItem("moxedh_theme");
+      var dark = saved ? saved === "dark" : (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+      if (dark) document.documentElement.setAttribute("data-theme", "dark");
+    } catch (e) {}
+  })();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -20,11 +29,34 @@
     --ink: #233240;
     --ink-soft: #5a6a63;
     --line: #c7c0a9;
+    --owned: #3d6b4f;
+    --owned-bg: #dceedd;
     --w: #f8f4e3; --u: #a9d0e0; --b: #8a8177; --r: #e0a08a; --g: #9dbf8e;
+    color-scheme: light;
+  }
+
+  html[data-theme="dark"] {
+    --ledger: #16281f;
+    --ledger-dark: #0f1c15;
+    --paper: #182620;
+    --paper-dim: #1f2f27;
+    --card: #223229;
+    --brass: #c9a24f;
+    --brass-light: #e2c37e;
+    --stamp-red: #e0655a;
+    --ink: #e9e4d3;
+    --ink-soft: #a9b3a8;
+    --line: #3a4a3e;
+    --owned: #7fd6a3;
+    --owned-bg: #1e3a2a;
+    color-scheme: dark;
   }
 
   * { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
+  body {
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
 
   body {
     margin: 0;
@@ -68,6 +100,40 @@
     margin: 0;
   }
   .masthead-title .accent { color: var(--brass-light); font-style: italic; font-weight: 500; }
+
+  .theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--paper-dim);
+    font-size: 13px;
+    padding: 4px;
+    flex-shrink: 0;
+  }
+  .ttk-track {
+    width: 34px;
+    height: 19px;
+    background: rgba(248,244,227,0.16);
+    border: 1px solid rgba(248,244,227,0.32);
+    border-radius: 999px;
+    position: relative;
+    transition: background 0.2s ease;
+  }
+  .ttk-knob {
+    position: absolute;
+    top: 1.5px;
+    left: 1.5px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--brass-light);
+    transition: transform 0.2s ease;
+  }
+  .theme-toggle[aria-pressed="true"] .ttk-track { background: rgba(201,162,79,0.4); }
+  .theme-toggle[aria-pressed="true"] .ttk-knob { transform: translateX(15px); }
 
   /* ---------- SECTION HEADINGS ---------- */
   h2.section-title {
@@ -339,17 +405,25 @@
   /* ---------- FILTER BAR ---------- */
   .filter-bar {
     display: none;
-    align-items: center;
-    gap: 14px;
+    gap: 16px;
     margin: 22px 0 6px;
     flex-wrap: wrap;
   }
   .filter-bar.show { display: flex; }
-  .filter-bar label {
+  .filter-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1 1 220px;
+    min-width: 180px;
+  }
+  .filter-group label {
     font-family: 'IBM Plex Mono', monospace;
     font-size: 11.5px;
     text-transform: uppercase;
     color: var(--ink-soft);
+    white-space: nowrap;
+    flex-shrink: 0;
   }
   select {
     font-family: 'IBM Plex Mono', monospace;
@@ -358,6 +432,13 @@
     border: 1.5px solid var(--line);
     background: var(--card);
     color: var(--ink);
+    flex: 1;
+    width: 100%;
+    min-width: 0;
+  }
+  @media (max-width: 560px) {
+    .filter-bar { flex-direction: column; align-items: stretch; }
+    .filter-group { width: 100%; }
   }
 
   /* ---------- RESULTS ---------- */
@@ -417,8 +498,8 @@
     font-size: 10.5px;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: #3d6b4f;
-    background: #dceedd;
+    color: var(--owned);
+    background: var(--owned-bg);
     padding: 2px 7px;
     display: inline-block;
   }
@@ -479,9 +560,16 @@
   #cardPreviewBackdrop {
     position: fixed;
     inset: 0;
-    background: rgba(22, 40, 31, 0.6);
+    background: rgba(10, 16, 12, 0.4);
     z-index: 999;
     display: none;
+    pointer-events: none; /* laisse passer le hover vers les liens en dessous */
+    transition: background-color 0.15s ease;
+  }
+  #cardPreviewBackdrop.show { display: block; }
+  #cardPreviewBackdrop.touch-active {
+    background: rgba(10, 16, 12, 0.65);
+    pointer-events: auto; /* le tap sur le fond ferme l'aperçu */
   }
   .card-preview {
     position: fixed;
@@ -498,9 +586,10 @@
     width: 100%;
     aspect-ratio: 63 / 88;
     border-radius: 4.5% / 3.3%;
-    box-shadow: 0 22px 50px rgba(0,0,0,0.5);
+    box-shadow: 0 14px 30px rgba(0,0,0,0.4);
     background: var(--card);
     overflow: hidden;
+    cursor: pointer;
   }
   .card-preview img {
     position: absolute;
@@ -526,14 +615,46 @@
   }
   .card-preview-frame.loaded .card-preview-spinner { display: none; }
   @keyframes card-spin { to { transform: rotate(360deg); } }
+  .cp-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(15, 20, 16, 0.55);
+    color: #f4f1e6;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+  }
+  .cp-arrow:hover:not(:disabled) { background: rgba(15, 20, 16, 0.8); }
+  .cp-arrow:disabled { opacity: 0.25; cursor: default; }
+  .cp-arrow-left { left: 8px; }
+  .cp-arrow-right { right: 8px; }
+  .card-preview.has-nav .cp-arrow { display: flex; }
+  .card-preview-meta {
+    margin-top: 10px;
+    text-align: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: #f4f1e6;
+    min-height: 14px;
+  }
+  .card-preview-meta .cp-lift { color: var(--brass-light); }
   .card-preview-hint {
     display: none;
     margin-top: 10px;
     text-align: center;
     font-family: 'IBM Plex Mono', monospace;
     font-size: 12px;
-    color: var(--paper);
-    background: var(--ledger);
+    color: #f4f1e6;
+    background: #1f3b32;
     padding: 7px 10px;
   }
   .card-preview.touch-mode { pointer-events: auto; }
@@ -555,7 +676,8 @@
     flex-shrink: 0;
     mix-blend-mode: multiply;
   }
-  .commander-card.owned .stamp { border-color: #3d6b4f; color: #3d6b4f; }
+  .commander-card.owned .stamp { border-color: var(--owned); color: var(--owned); }
+  html[data-theme="dark"] .stamp { mix-blend-mode: normal; }
   .stamp .n { font-size: 22px; font-weight: 700; line-height: 1; }
   .stamp .u { font-size: 8px; letter-spacing: 0.05em; text-transform: uppercase; margin-top: 2px; }
 
@@ -606,6 +728,11 @@
     <div>
       <p class="masthead-title">Correspondance Collection Moxfield × EDHREC</p>
     </div>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-pressed="false" aria-label="Activer le thème sombre" title="Thème sombre">
+      <span class="ttk-sun">☀</span>
+      <span class="ttk-track"><span class="ttk-knob"></span></span>
+      <span class="ttk-moon">☾</span>
+    </button>
   </div>
 </header>
 
@@ -686,17 +813,21 @@
   <p class="section-note" id="resultsNote" style="display:none;">Classées par score de synergie : la somme, pour chaque commandant, du <em>lift</em> de tes cartes qui lui sont statistiquement associées (bien au-delà de leur taux de jeu moyen). Un score élevé = beaucoup de tes cartes de niche collent précisément à ce commandant — pas une comparaison avec une decklist type.</p>
 
   <div class="filter-bar" id="filterBar">
-    <label>Trier</label>
-    <select id="sortSelect">
-      <option value="score">Score de synergie</option>
-      <option value="matches">Nombre de cartes associées</option>
-    </select>
-    <label>Filtrer</label>
-    <select id="ownedFilter">
-      <option value="all">Tous les commandants</option>
-      <option value="owned">Uniquement ceux que je possède déjà</option>
-      <option value="missing">Uniquement à acheter</option>
-    </select>
+    <div class="filter-group">
+      <label for="sortSelect">Trier</label>
+      <select id="sortSelect">
+        <option value="score">Score de synergie</option>
+        <option value="matches">Nombre de cartes associées</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label for="ownedFilter">Filtrer</label>
+      <select id="ownedFilter">
+        <option value="all">Tous les commandants</option>
+        <option value="owned">Uniquement ceux que je possède déjà</option>
+        <option value="missing">Uniquement à acheter</option>
+      </select>
+    </div>
   </div>
 
   <div id="results"></div>
@@ -711,7 +842,10 @@
   <div class="card-preview-frame" id="cardPreviewFrame">
     <div class="card-preview-spinner"></div>
     <img id="cardPreviewImg" src="" alt="" />
+    <button class="cp-arrow cp-arrow-left" id="cpPrevBtn" type="button" aria-label="Carte précédente">‹</button>
+    <button class="cp-arrow cp-arrow-right" id="cpNextBtn" type="button" aria-label="Carte suivante">›</button>
   </div>
+  <div class="card-preview-meta" id="cardPreviewMeta"></div>
   <div class="card-preview-hint">Touche à nouveau la carte pour ouvrir sa page EDHREC ↗</div>
 </div>
 
@@ -730,7 +864,6 @@
   const CACHE_MAX_AGE_MS = 1000 * 60 * 60 * 24 * 30; // 30 jours
   const FETCH_CONCURRENCY = 12; // requêtes cartes en parallèle pendant l'analyse principale
   const REFINE_CONCURRENCY = 6; // requêtes commandants en parallèle pour le top N
-  const REFINE_TOP_N = 20; // commandants pour lesquels on affine le % avec un 2e fetch
   const MAX_RETRIES = 2; // nouvelles tentatives sur échec réseau transitoire
 
   const EDHREC_BASE = "https://json.edhrec.com";
@@ -1022,6 +1155,18 @@
     return null;
   }
 
+  // EDHREC inclut "legal_commander": true directement dans les données de la
+  // carte elle-même quand elle est éligible comme commandant (créature
+  // légendaire, planeswalker autorisé type Daretti, etc.) — champ absent
+  // sinon. C'est la source de vérité, pas une inférence par co-occurrence.
+  function extractLegalCommander(cardJson) {
+    try {
+      return cardJson.container.json_dict.card.legal_commander === true;
+    } catch (e) {
+      return false;
+    }
+  }
+
   const WUBRG_ORDER = ["W", "U", "B", "R", "G"];
   function sortColorIdentity(colors) {
     return Array.from(new Set(colors)).sort(
@@ -1081,8 +1226,8 @@
       // Identité couleur inférée par défaut : union des couleurs des cartes
       // de ta collection associées. C'est une approximation (le vrai commandant
       // peut avoir des couleurs non représentées si tu n'as aucune carte dans
-      // cette couleur pour lui) — remplacée par la valeur exacte pour le top
-      // affiché via refineColors().
+      // cette couleur pour lui) — remplacée par la valeur exacte, au fur et à
+      // mesure de l'affichage, via refineVisibleColors().
       e.colorIdentity = sortColorIdentity(Array.from(e.colorIdentitySet));
     }
     arr.sort((a, b) => b.totalLift - a.totalLift);
@@ -1097,16 +1242,35 @@
     }
   }
 
-  // Remplace l'identité couleur inférée (approximative) par la valeur exacte
-  // pour le top N affiché, via un second appel dédié à la page du commandant.
-  async function refineColors(commanders, n) {
-    const top = commanders.slice(0, n);
-    await runPool(top, async (entry) => {
+  // Remplace l'identité couleur inférée (approximative) par la valeur exacte,
+  // mais SEULEMENT pour les commandants actuellement affichés à l'écran — pas
+  // question de faire une requête par commandant sur toute la liste (des
+  // milliers potentiellement). Chaque nouvelle page ("voir plus") déclenche
+  // son propre lot, sans jamais re-fetcher un commandant déjà résolu.
+  const colorFetchInFlight = new Set();
+  function refineVisibleColors(list) {
+    const targets = list.filter((c) => !c.colorExact && !colorFetchInFlight.has(c.slug));
+    if (targets.length === 0) return;
+    targets.forEach((c) => colorFetchInFlight.add(c.slug));
+    runPool(targets, async (entry) => {
       const data = await fetchCommanderPage(entry.slug);
+      colorFetchInFlight.delete(entry.slug);
       if (!data) return;
       entry.colorIdentity = extractColorIdentity(data);
+      entry.colorExact = true;
+      const cardEl = els.results.querySelector('.commander-card[data-slug="' + cssEscape(entry.slug) + '"]');
+      if (!cardEl) return;
+      const pipsEl = cardEl.querySelector(".cc-pips");
+      if (pipsEl) {
+        pipsEl.innerHTML = entry.colorIdentity
+          .map((col) => `<span class="pip" style="background:${PIP_COLORS[col] || "#ccc"}"></span>`)
+          .join("");
+      }
     }, REFINE_CONCURRENCY, null);
-    return commanders;
+  }
+
+  function cssEscape(s) {
+    return window.CSS && CSS.escape ? CSS.escape(s) : s.replace(/[^a-zA-Z0-9_-]/g, "\\$&");
   }
 
   // ---------------------------------------------------------------------
@@ -1114,8 +1278,8 @@
   // ---------------------------------------------------------------------
   const PIP_COLORS = { W: "var(--w)", U: "var(--u)", B: "var(--b)", R: "var(--r)", G: "var(--g)" };
 
-  let visibleCommanderCount = 60;
-  const COMMANDER_PAGE_SIZE = 60;
+  let visibleCommanderCount = 40;
+  const COMMANDER_PAGE_SIZE = 40;
 
   function renderResults() {
     const sortBy = els.sortSelect.value;
@@ -1143,6 +1307,7 @@
     visibleList.forEach((c, i) => {
       const card = document.createElement("div");
       card.className = "commander-card" + (c.isOwned ? " owned" : "");
+      card.dataset.slug = c.slug;
 
       const pips = (c.colorIdentity || [])
         .map((col) => `<span class="pip" style="background:${PIP_COLORS[col] || "#ccc"}"></span>`)
@@ -1152,14 +1317,12 @@
       const stampUnit = c.matches.length > 1 ? "cartes liées" : "carte liée";
 
       const INITIAL_VISIBLE = 30;
-      const visibleMatches = c.matches.slice(0, INITIAL_VISIBLE);
-      const restMatches = c.matches.slice(INITIAL_VISIBLE);
+      const rowHtml = (m, idx) =>
+        `<div class="row"><span><a class="card-hover-link" href="${m.cardUrl}" target="_blank" rel="noopener" data-card="${escapeHtml(m.cardName)}" data-commander-slug="${escapeHtml(c.slug)}" data-match-index="${idx}">${escapeHtml(m.cardName)}</a></span><span class="lift">×${m.lift.toFixed(1)}</span></div>`;
 
-      const rowHtml = (m) =>
-        `<div class="row"><span><a class="card-hover-link" href="${m.cardUrl}" target="_blank" rel="noopener" data-card="${escapeHtml(m.cardName)}">${escapeHtml(m.cardName)}</a></span><span class="lift">×${m.lift.toFixed(1)}</span></div>`;
-
-      const matchRows = visibleMatches.map(rowHtml).join("");
-      const restRows = restMatches.map(rowHtml).join("");
+      const matchRows = c.matches.map((m, idx) => (idx < INITIAL_VISIBLE ? rowHtml(m, idx) : "")).join("");
+      const restRows = c.matches.map((m, idx) => (idx >= INITIAL_VISIBLE ? rowHtml(m, idx) : "")).join("");
+      const restCount = Math.max(0, c.matches.length - INITIAL_VISIBLE);
 
       const deckCountText = c.totalDecksSample
         ? c.totalDecksSample.toLocaleString("fr-FR") + " deck(s) recensés sur EDHREC"
@@ -1170,7 +1333,7 @@
         <div>
           <div class="cc-head">
             <span class="cc-rank">N°${i + 1}</span>
-            <h3 class="cc-name"><a href="${c.url}" target="_blank" rel="noopener">${escapeHtml(c.name)}</a></h3>
+            <h3 class="cc-name"><a class="card-hover-link" href="${c.url}" target="_blank" rel="noopener" data-card="${escapeHtml(c.name)}">${escapeHtml(c.name)}</a></h3>
             <span class="cc-pips">${pips}</span>
             ${c.isOwned ? '<span class="cc-owned-flag">Déjà en collection</span>' : ""}
           </div>
@@ -1178,7 +1341,7 @@
           <button class="cc-cards-toggle" type="button">Voir les cartes associées ↓</button>
           <div class="cc-cards-list">
             ${matchRows}
-            ${restMatches.length > 0 ? `<div class="cc-cards-rest">${restRows}</div><button class="cc-cards-more" type="button">Voir ${restMatches.length} carte(s) de plus ↓</button>` : ""}
+            ${restCount > 0 ? `<div class="cc-cards-rest">${restRows}</div><button class="cc-cards-more" type="button">Voir ${restCount} carte(s) de plus ↓</button>` : ""}
           </div>
         </div>
         <div class="stamp"><span class="n">${stampValue}</span><span class="u">${stampUnit}</span></div>
@@ -1203,6 +1366,11 @@
 
       els.results.appendChild(card);
     });
+
+    // Charge l'identité couleur exacte uniquement pour ce qui est affiché
+    // à l'écran ; les commandants déjà résolus (cache mémoire ou page
+    // précédente) ne redéclenchent aucune requête.
+    refineVisibleColors(visibleList);
 
     if (list.length > visibleCommanderCount) {
       const remaining = list.length - visibleCommanderCount;
@@ -1274,8 +1442,7 @@
       }
       // Ré-agrège avec la carte nouvellement trouvée et rafraîchit l'affichage
       allCommanders = aggregate(lastFetchResults, lastMinSample);
-      await refineColors(allCommanders, REFINE_TOP_N);
-      visibleCommanderCount = 60;
+      visibleCommanderCount = COMMANDER_PAGE_SIZE;
       renderResults();
     } else {
       btn.disabled = false;
@@ -1342,18 +1509,15 @@
         if (fc) fromCache++;
         if (data && !notFound) {
           found++;
-          // Toute carte listée comme jouée par un commandant est, par
-          // construction, un commandant reconnu par EDHREC. On vérifie donc
-          // ici (sans filtrage par échantillon minimum, non pertinent pour
-          // cette question) si l'un d'eux correspond à une carte que tu
-          // possèdes déjà — c'est ainsi qu'on détecte un commandant en
-          // collection sans se limiter aux seules créatures légendaires
-          // (fond de fusion Partenaire, Background, planeswalker-commandant…
-          // sont couverts de la même façon).
+          // Source de vérité : le champ "legal_commander" fourni par EDHREC
+          // sur la carte elle-même (couvre les créatures légendaires, mais
+          // aussi les planeswalkers-commandants type Daretti, etc.) — pas une
+          // inférence par co-occurrence avec d'autres cartes.
+          if (extractLegalCommander(data)) ownedCommanderSlugs.add(item.slug);
           for (const cv of extractCommanderLists(data)) {
-            const cSlug = cv.sanitized || cv.slug || cv.name;
-            if (cv.potential_decks >= minSample) seenCommanders.add(cSlug);
-            if (collection.has(cSlug)) ownedCommanderSlugs.add(cSlug);
+            if (cv.potential_decks >= minSample) {
+              seenCommanders.add(cv.sanitized || cv.slug || cv.name);
+            }
           }
         } else {
           notFoundItems.push({ name: item.name, slug: item.slug });
@@ -1379,9 +1543,6 @@
     els.progressLabel.textContent = "Agrégation des scores…";
     allCommanders = aggregate(results, minSample);
 
-    els.progressLabel.textContent = "Récupération des couleurs pour le top " + REFINE_TOP_N + "…";
-    await refineColors(allCommanders, REFINE_TOP_N);
-
     els.statCommanders.textContent = allCommanders.length;
     els.statOwnedCommanders.textContent = ownedCommanderSlugs.size;
     els.progressLabel.textContent = "Terminé.";
@@ -1393,7 +1554,7 @@
     els.resultsNote.style.display = "block";
     els.filterBar.classList.add("show");
 
-    visibleCommanderCount = 60;
+    visibleCommanderCount = COMMANDER_PAGE_SIZE;
     renderResults();
     els.resultsTitle.scrollIntoView({ behavior: "smooth", block: "start" });
   }
@@ -1459,8 +1620,8 @@
   els.dropzone.addEventListener("drop", (e) => handleFile(e.dataTransfer.files[0]));
 
   els.startBtn.addEventListener("click", startAnalysis);
-  els.sortSelect.addEventListener("change", () => { visibleCommanderCount = 60; renderResults(); });
-  els.ownedFilter.addEventListener("change", () => { visibleCommanderCount = 60; renderResults(); });
+  els.sortSelect.addEventListener("change", () => { visibleCommanderCount = COMMANDER_PAGE_SIZE; renderResults(); });
+  els.ownedFilter.addEventListener("change", () => { visibleCommanderCount = COMMANDER_PAGE_SIZE; renderResults(); });
   els.clearCacheBtn.addEventListener("click", async () => {
     await idbClearAll();
     els.restoreSessionBtn.style.display = "none";
@@ -1474,9 +1635,15 @@
   const cardPreviewFrame = $("cardPreviewFrame");
   const cardPreviewImg = $("cardPreviewImg");
   const cardPreviewBackdrop = $("cardPreviewBackdrop");
+  const cardPreviewMeta = $("cardPreviewMeta");
+  const cpPrevBtn = $("cpPrevBtn");
+  const cpNextBtn = $("cpNextBtn");
   const supportsHover =
     window.matchMedia && window.matchMedia("(hover: hover) and (pointer: fine)").matches;
   let armedLink = null;
+  let currentPreviewUrl = null;
+  let navCommanderSlug = null;
+  let navIndex = -1;
 
   function scryfallImageUrl(name) {
     return "https://api.scryfall.com/cards/named?fuzzy=" + encodeURIComponent(name) + "&format=image&version=large";
@@ -1490,20 +1657,72 @@
     cardPreviewFrame.classList.add("loaded"); // arrête le spinner même en cas d'échec
   });
 
-  function showCardPreview(name, touchMode) {
+  function renderPreviewFor(name, url) {
     cardPreviewImg.classList.remove("loaded");
     cardPreviewFrame.classList.remove("loaded");
     cardPreviewImg.src = scryfallImageUrl(name);
     cardPreviewImg.alt = name;
+    currentPreviewUrl = url;
+  }
+
+  function updatePreviewNavUI() {
+    const commander = navCommanderSlug ? allCommanders.find((c) => c.slug === navCommanderSlug) : null;
+    if (commander && navIndex >= 0) {
+      cardPreview.classList.add("has-nav");
+      cpPrevBtn.disabled = navIndex <= 0;
+      cpNextBtn.disabled = navIndex >= commander.matches.length - 1;
+      const m = commander.matches[navIndex];
+      cardPreviewMeta.innerHTML =
+        escapeHtml(m.cardName) + ' · synergie ×<span class="cp-lift">' + m.lift.toFixed(1) + "</span> · " +
+        (navIndex + 1) + " / " + commander.matches.length;
+    } else {
+      cardPreview.classList.remove("has-nav");
+      cardPreviewMeta.innerHTML = "";
+    }
+  }
+
+  function navigatePreview(delta) {
+    if (!navCommanderSlug || navIndex < 0) return;
+    const commander = allCommanders.find((c) => c.slug === navCommanderSlug);
+    if (!commander) return;
+    const newIndex = navIndex + delta;
+    if (newIndex < 0 || newIndex >= commander.matches.length) return;
+    navIndex = newIndex;
+    const m = commander.matches[navIndex];
+    renderPreviewFor(m.cardName, m.cardUrl);
+    updatePreviewNavUI();
+  }
+
+  cpPrevBtn.addEventListener("click", (e) => { e.stopPropagation(); navigatePreview(-1); });
+  cpNextBtn.addEventListener("click", (e) => { e.stopPropagation(); navigatePreview(1); });
+
+  // Clic sur l'image agrandie elle-même = ouvre sa page (EDHREC ou Scryfall
+  // selon le contexte), sauf si le clic vise une des flèches de navigation.
+  cardPreviewFrame.addEventListener("click", (e) => {
+    if (e.target.closest(".cp-arrow")) return;
+    if (currentPreviewUrl) window.open(currentPreviewUrl, "_blank", "noopener");
+  });
+
+  function showCardPreview(link, touchMode) {
+    const name = link.dataset.card;
+    navCommanderSlug = link.dataset.commanderSlug || null;
+    navIndex = link.dataset.matchIndex != null ? parseInt(link.dataset.matchIndex, 10) : -1;
+
+    renderPreviewFor(name, link.href);
+    updatePreviewNavUI();
+
     cardPreview.classList.add("show");
     cardPreview.classList.toggle("touch-mode", !!touchMode);
-    cardPreviewBackdrop.style.display = touchMode ? "block" : "none";
+    cardPreviewBackdrop.classList.toggle("touch-active", !!touchMode);
+    cardPreviewBackdrop.classList.add("show");
   }
 
   function hideCardPreview() {
-    cardPreview.classList.remove("show", "touch-mode");
-    cardPreviewBackdrop.style.display = "none";
+    cardPreview.classList.remove("show", "touch-mode", "has-nav");
+    cardPreviewBackdrop.classList.remove("show", "touch-active");
     armedLink = null;
+    navCommanderSlug = null;
+    navIndex = -1;
   }
 
   // Délégation d'événements sur tout le document : les liens de cartes sont
@@ -1512,7 +1731,7 @@
   document.body.addEventListener("mouseover", (e) => {
     if (!supportsHover) return;
     const link = e.target.closest(".card-hover-link");
-    if (link) showCardPreview(link.dataset.card, false);
+    if (link) showCardPreview(link, false);
   });
   document.body.addEventListener("mouseout", (e) => {
     if (!supportsHover) return;
@@ -1531,9 +1750,26 @@
     }
     e.preventDefault();
     armedLink = link;
-    showCardPreview(link.dataset.card, true);
+    showCardPreview(link, true);
   });
   cardPreviewBackdrop.addEventListener("click", hideCardPreview);
+
+  // -------------------------------------------------------------------
+  // Thème sombre / clair
+  // -------------------------------------------------------------------
+  const themeToggle = $("themeToggle");
+  function applyTheme(dark) {
+    if (dark) document.documentElement.setAttribute("data-theme", "dark");
+    else document.documentElement.removeAttribute("data-theme");
+    themeToggle.setAttribute("aria-pressed", dark ? "true" : "false");
+    themeToggle.title = dark ? "Thème clair" : "Thème sombre";
+  }
+  applyTheme(document.documentElement.getAttribute("data-theme") === "dark");
+  themeToggle.addEventListener("click", () => {
+    const dark = document.documentElement.getAttribute("data-theme") !== "dark";
+    applyTheme(dark);
+    try { localStorage.setItem("moxedh_theme", dark ? "dark" : "light"); } catch (e) {}
+  });
 
   openDb().then((_db) => {
     db = _db;
