@@ -3,53 +3,63 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Correspondance — Collection Moxfield × EDHREC</title>
+<title>M.E.C.A — Moxfield x EDHREC Collection Analyser</title>
 <script>
   (function () {
     try {
       var saved = localStorage.getItem("moxedh_theme");
-      var dark = saved ? saved === "dark" : (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
-      if (dark) document.documentElement.setAttribute("data-theme", "dark");
+      var light = saved ? saved === "light" : (window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches && !window.matchMedia("(prefers-color-scheme: dark)").matches);
+      if (light) document.documentElement.setAttribute("data-theme", "light");
     } catch (e) {}
   })();
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --ledger: #1f3b32;
-    --ledger-dark: #16281f;
-    --paper: #e7e3d3;
-    --paper-dim: #dcd7c3;
-    --card: #f4f1e6;
-    --brass: #a9812e;
-    --brass-light: #c9a24f;
-    --stamp-red: #b23a32;
-    --ink: #233240;
-    --ink-soft: #5a6a63;
-    --line: #c7c0a9;
-    --owned: #3d6b4f;
-    --owned-bg: #dceedd;
-    --w: #f8f4e3; --u: #a9d0e0; --b: #8a8177; --r: #e0a08a; --g: #9dbf8e;
-    color-scheme: light;
+    --surface: #060a14;
+    --surface-dark: #03050b;
+    --bg: #070c18;
+    --bg-dim: #0a1122;
+    --panel: #0c1526;
+    --accent: #35d6ff;
+    --accent-light: #8ff0ff;
+    --accent-2: #5b7fff;
+    --danger: #ff3d7f;
+    --text: #e6f2ff;
+    --text-dim: #6f85ab;
+    --line: rgba(90, 170, 255, 0.24);
+    --owned: #33ffb0;
+    --owned-bg: rgba(51, 255, 176, 0.12);
+    --accent-soft: rgba(53, 214, 255, 0.08);
+    --glow: 0 0 12px rgba(53, 214, 255, 0.55), 0 0 2px rgba(53, 214, 255, 0.9);
+    --grid-line: rgba(90, 170, 255, 0.06);
+    --w: #f3e9c9; --u: #6fc3ff; --b: #9aa3c2; --r: #ff8a7a; --g: #6de8a6;
+    --surface-text: #eaf6ff;
+    color-scheme: dark;
   }
 
-  html[data-theme="dark"] {
-    --ledger: #16281f;
-    --ledger-dark: #0f1c15;
-    --paper: #182620;
-    --paper-dim: #1f2f27;
-    --card: #223229;
-    --brass: #c9a24f;
-    --brass-light: #e2c37e;
-    --stamp-red: #e0655a;
-    --ink: #e9e4d3;
-    --ink-soft: #a9b3a8;
-    --line: #3a4a3e;
-    --owned: #7fd6a3;
-    --owned-bg: #1e3a2a;
-    color-scheme: dark;
+  html[data-theme="light"] {
+    --surface: #0a1122;
+    --surface-dark: #060a14;
+    --bg: #f2f7ff;
+    --bg-dim: #e7f0ff;
+    --panel: #ffffff;
+    --accent: #0091d6;
+    --accent-light: #00b8f0;
+    --accent-2: #2f5fdb;
+    --danger: #d92a63;
+    --text: #0a1120;
+    --text-dim: #566a8c;
+    --line: rgba(0, 130, 210, 0.22);
+    --owned: #00a878;
+    --owned-bg: rgba(0, 168, 120, 0.1);
+    --accent-soft: rgba(0, 145, 214, 0.06);
+    --glow: 0 0 10px rgba(0, 145, 214, 0.28), 0 0 1px rgba(0, 145, 214, 0.5);
+    --grid-line: rgba(0, 130, 210, 0.05);
+    --w: #7a6a2a; --u: #0091d6; --b: #576079; --r: #d9503a; --g: #1a9d63;
+    color-scheme: light;
   }
 
   * { box-sizing: border-box; }
@@ -60,13 +70,16 @@
 
   body {
     margin: 0;
-    background: var(--paper);
-    color: var(--ink);
+    background:
+      linear-gradient(var(--grid-line) 1px, transparent 1px) 0 0 / 100% 42px,
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px) 0 0 / 42px 100%,
+      var(--bg);
+    color: var(--text);
     font-family: 'IBM Plex Sans', sans-serif;
     line-height: 1.5;
   }
 
-  ::selection { background: var(--brass-light); color: var(--ledger-dark); }
+  ::selection { background: var(--accent-light); color: var(--surface-dark); }
 
   a { color: inherit; }
 
@@ -78,10 +91,28 @@
 
   /* ---------- HEADER ---------- */
   header.masthead {
-    background: var(--ledger);
-    color: var(--paper);
-    border-bottom: 6px double var(--brass);
-    padding: 40px 24px 32px;
+    background: var(--surface);
+    color: var(--surface-text);
+    border-bottom: 1px solid var(--accent);
+    box-shadow: 0 1px 24px -4px rgba(53, 214, 255, 0.45);
+    padding: 34px 24px 28px;
+    position: relative;
+    overflow: hidden;
+  }
+  header.masthead::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, var(--accent-2), var(--accent), transparent);
+    opacity: 0.5;
+    height: 1px;
+    top: auto;
+    bottom: -1px;
+    animation: scan-glow 5s ease-in-out infinite;
+  }
+  @keyframes scan-glow {
+    0%, 100% { opacity: 0.25; }
+    50% { opacity: 0.85; }
   }
   .masthead-inner {
     max-width: 1040px;
@@ -91,15 +122,59 @@
     justify-content: space-between;
     gap: 24px;
     flex-wrap: wrap;
+    position: relative;
+  }
+  .masthead-brand {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    flex-wrap: wrap;
   }
   .masthead-title {
-    font-family: 'Fraunces', serif;
-    font-weight: 600;
-    font-size: clamp(20px, 3.4vw, 30px);
-    letter-spacing: -0.01em;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: clamp(26px, 4.4vw, 38px);
+    letter-spacing: 0.06em;
     margin: 0;
+    color: var(--accent-light);
+    text-shadow: var(--glow);
   }
-  .masthead-title .accent { color: var(--brass-light); font-style: italic; font-weight: 500; }
+  .masthead-title .accent { color: var(--accent-light); font-style: italic; font-weight: 500; }
+  .masthead-sub {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    color: var(--text-dim);
+    margin: 4px 0 0;
+  }
+  .masthead-sub .letter { color: var(--accent-light); }
+
+  .masthead-controls {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-shrink: 0;
+  }
+  .lang-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: transparent;
+    border: 1px solid rgba(234,246,255,0.32);
+    border-radius: 3px;
+    cursor: pointer;
+    color: var(--surface-text);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    letter-spacing: 0.04em;
+    padding: 5px 9px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .lang-toggle:hover { border-color: var(--accent); box-shadow: 0 0 8px rgba(53,214,255,0.35); }
+  .lang-toggle .lang-fr, .lang-toggle .lang-en { opacity: 0.4; transition: opacity 0.15s ease, color 0.15s ease; }
+  .lang-toggle .lang-sep { opacity: 0.3; }
+  .lang-toggle[aria-pressed="false"] .lang-fr { opacity: 1; color: var(--accent-light); }
+  .lang-toggle[aria-pressed="true"] .lang-en { opacity: 1; color: var(--accent-light); }
 
   .theme-toggle {
     display: inline-flex;
@@ -108,7 +183,7 @@
     background: none;
     border: none;
     cursor: pointer;
-    color: var(--paper-dim);
+    color: var(--bg-dim);
     font-size: 13px;
     padding: 4px;
     flex-shrink: 0;
@@ -116,8 +191,8 @@
   .ttk-track {
     width: 34px;
     height: 19px;
-    background: rgba(248,244,227,0.16);
-    border: 1px solid rgba(248,244,227,0.32);
+    background: rgba(234,246,255,0.14);
+    border: 1px solid rgba(234,246,255,0.32);
     border-radius: 999px;
     position: relative;
     transition: background 0.2s ease;
@@ -129,28 +204,30 @@
     width: 14px;
     height: 14px;
     border-radius: 50%;
-    background: var(--brass-light);
+    background: var(--accent-light);
     transition: transform 0.2s ease;
   }
-  .theme-toggle[aria-pressed="true"] .ttk-track { background: rgba(201,162,79,0.4); }
+  .theme-toggle[aria-pressed="true"] .ttk-track { background: rgba(53,214,255,0.4); }
   .theme-toggle[aria-pressed="true"] .ttk-knob { transform: translateX(15px); }
 
   /* ---------- SECTION HEADINGS ---------- */
   h2.section-title {
-    font-family: 'Fraunces', serif;
+    font-family: 'Space Grotesk', sans-serif;
     font-size: 26px;
     font-weight: 600;
     margin: 48px 0 4px;
-    border-bottom: 2px solid var(--ledger);
+    border-bottom: 1px solid var(--line);
     padding-bottom: 12px;
+    color: var(--text);
+    text-shadow: 0 0 18px rgba(53,214,255,0.18);
   }
-  .section-note { color: var(--ink-soft); font-size: 14.5px; margin: 0 0 20px; max-width: 640px; }
+  .section-note { color: var(--text-dim); font-size: 14.5px; margin: 0 0 20px; max-width: 640px; }
 
   /* ---------- EXPLICATION REPLIABLE ---------- */
   .help-panel {
     margin-top: 40px;
     border: 1.5px solid var(--line);
-    background: var(--card);
+    background: var(--panel);
   }
   .help-panel summary {
     cursor: pointer;
@@ -163,12 +240,12 @@
     font-size: 12.5px;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: var(--ledger);
+    color: var(--accent-light);
   }
   .help-panel summary::-webkit-details-marker { display: none; }
   .help-panel summary::before {
     content: "▸";
-    color: var(--brass);
+    color: var(--accent);
     transition: transform 0.15s ease;
     display: inline-block;
   }
@@ -179,19 +256,19 @@
     font-size: 14px;
   }
   .help-body h4 {
-    font-family: 'Fraunces', serif;
+    font-family: 'Space Grotesk', sans-serif;
     font-size: 15.5px;
     font-weight: 600;
-    color: var(--ledger);
+    color: var(--accent-light);
     margin: 18px 0 6px;
   }
   .help-body h4:first-child { margin-top: 16px; }
-  .help-body p { margin: 6px 0; color: var(--ink); }
-  .help-body ol, .help-body ul { margin: 6px 0; padding-left: 20px; color: var(--ink); }
+  .help-body p { margin: 6px 0; color: var(--text); }
+  .help-body ol, .help-body ul { margin: 6px 0; padding-left: 20px; color: var(--text); }
   .help-body li { margin: 3px 0; }
   .help-body code {
     font-family: 'IBM Plex Mono', monospace;
-    background: var(--paper);
+    background: var(--bg);
     padding: 1px 5px;
     font-size: 12.5px;
     border: 1px solid var(--line);
@@ -206,64 +283,65 @@
     align-items: center;
     gap: 8px;
     padding: 4px 0;
-    border-bottom: 1px solid rgba(0,0,0,0.06);
+    border-bottom: 1px solid var(--line);
   }
-  #notFoundList li a { color: var(--ink); text-decoration: none; border-bottom: 1px dotted var(--ink-soft); }
-  #notFoundList li a:hover { border-bottom-style: solid; color: var(--ledger); }
+  #notFoundList li a { color: var(--text); text-decoration: none; border-bottom: 1px dotted var(--text-dim); }
+  #notFoundList li a:hover { border-bottom-style: solid; color: var(--accent-light); }
   .retry-card-btn {
     font-family: 'IBM Plex Mono', monospace;
     font-size: 13px;
     line-height: 1;
-    background: var(--paper);
+    background: var(--bg);
     border: 1px solid var(--line);
-    color: var(--ledger);
+    color: var(--accent-light);
     cursor: pointer;
     padding: 3px 7px;
     flex-shrink: 0;
   }
-  .retry-card-btn:hover:not(:disabled) { background: var(--brass-light); }
+  .retry-card-btn:hover:not(:disabled) { background: var(--accent-light); }
   .retry-card-btn:disabled { cursor: default; opacity: 0.6; }
   .retry-card-btn.spinning { animation: card-spin 0.7s linear infinite; }
   .retry-status {
     font-family: 'IBM Plex Mono', monospace;
     font-size: 11px;
-    color: var(--stamp-red);
+    color: var(--danger);
   }
 
   /* ---------- DROPZONE ---------- */
   .dropzone {
     margin-top: 22px;
-    border: 2px dashed var(--brass);
-    background: var(--card);
+    border: 2px dashed var(--accent);
+    background: var(--panel);
     padding: 40px 24px;
     text-align: center;
     position: relative;
-    transition: background 0.15s ease, border-color 0.15s ease;
+    transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
     cursor: pointer;
+    box-shadow: inset 0 0 30px -10px rgba(53, 214, 255, 0.15);
   }
+  .dropzone:hover { box-shadow: inset 0 0 30px -10px rgba(53, 214, 255, 0.3), 0 0 20px -8px var(--accent); }
   .dropzone::before, .dropzone::after {
     content: "";
     position: absolute;
     top: 10px;
-    width: 12px; height: 12px;
-    border-radius: 50%;
-    background: var(--paper);
-    box-shadow: inset 0 0 0 1.5px var(--line);
+    width: 14px; height: 14px;
+    border-color: var(--accent);
+    opacity: 0.6;
   }
-  .dropzone::before { left: 10px; }
-  .dropzone::after { right: 10px; }
-  .dropzone.drag { background: #fbf8ee; border-color: var(--stamp-red); }
+  .dropzone::before { left: 10px; border-top: 2px solid; border-left: 2px solid; }
+  .dropzone::after { right: 10px; border-top: 2px solid; border-right: 2px solid; }
+  .dropzone.drag { background: var(--accent-soft); border-color: var(--danger); box-shadow: 0 0 24px -6px var(--accent); }
   .dropzone input { display: none; }
   .dropzone-label {
-    font-family: 'Fraunces', serif;
+    font-family: 'Space Grotesk', sans-serif;
     font-size: 19px;
     font-weight: 500;
-    color: var(--ledger);
+    color: var(--accent-light);
   }
   .dropzone-hint {
     font-family: 'IBM Plex Mono', monospace;
     font-size: 12px;
-    color: var(--ink-soft);
+    color: var(--text-dim);
     margin-top: 8px;
     letter-spacing: 0.02em;
   }
@@ -272,8 +350,8 @@
     margin-top: 14px;
     font-family: 'IBM Plex Mono', monospace;
     font-size: 12.5px;
-    background: var(--ledger);
-    color: var(--paper);
+    background: var(--surface);
+    color: var(--surface-text);
     padding: 5px 10px;
   }
 
@@ -290,7 +368,7 @@
     font-size: 11.5px;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    color: var(--ink-soft);
+    color: var(--text-dim);
     display: block;
     margin-bottom: 5px;
   }
@@ -301,35 +379,35 @@
     font-size: 13px;
     padding: 9px 10px;
     border: 1.5px solid var(--line);
-    background: var(--card);
-    color: var(--ink);
+    background: var(--panel);
+    color: var(--text);
   }
   input[type="text"]:focus, input[type="url"]:focus, input[type="number"]:focus {
-    outline: 2px solid var(--brass);
+    outline: 2px solid var(--accent);
     outline-offset: 1px;
-    border-color: var(--brass);
+    border-color: var(--accent);
   }
   .btn {
     font-family: 'IBM Plex Mono', monospace;
     font-size: 13px;
     letter-spacing: 0.03em;
     text-transform: uppercase;
-    background: var(--ledger);
-    color: var(--paper);
+    background: var(--surface);
+    color: var(--surface-text);
     border: none;
     padding: 12px 20px;
     cursor: pointer;
     transition: background 0.12s ease, transform 0.06s ease;
   }
-  .btn:hover:not(:disabled) { background: var(--ledger-dark); }
+  .btn:hover:not(:disabled) { background: var(--surface-dark); box-shadow: 0 0 16px -2px var(--accent); }
   .btn:active:not(:disabled) { transform: translateY(1px); }
-  .btn:disabled { background: #9a9a8a; cursor: not-allowed; }
+  .btn:disabled { background: var(--text-dim); opacity: 0.5; cursor: not-allowed; }
   .btn.secondary {
     background: transparent;
-    color: var(--ledger);
-    border: 1.5px solid var(--ledger);
+    color: var(--accent-light);
+    border: 1.5px solid var(--accent);
   }
-  .btn.secondary:hover:not(:disabled) { background: var(--ledger); color: var(--paper); }
+  .btn.secondary:hover:not(:disabled) { background: var(--accent-soft); color: var(--accent-light); box-shadow: 0 0 16px -4px var(--accent); }
 
   .actions-row { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; align-items: center; }
 
@@ -337,7 +415,7 @@
   .progress-panel {
     margin-top: 24px;
     border: 1.5px solid var(--line);
-    background: var(--card);
+    background: var(--panel);
     padding: 18px 20px;
     display: none;
   }
@@ -347,12 +425,12 @@
     justify-content: space-between;
     font-family: 'IBM Plex Mono', monospace;
     font-size: 12.5px;
-    color: var(--ink-soft);
+    color: var(--text-dim);
     margin-bottom: 8px;
   }
   .progress-track {
     height: 8px;
-    background: var(--paper-dim);
+    background: var(--bg-dim);
     position: relative;
     overflow: hidden;
   }
@@ -360,15 +438,16 @@
     height: 100%;
     width: 0%;
     background: repeating-linear-gradient(
-      -45deg, var(--brass), var(--brass) 6px, var(--brass-light) 6px, var(--brass-light) 12px
+      -45deg, var(--accent), var(--accent) 6px, var(--accent-light) 6px, var(--accent-light) 12px
     );
+    box-shadow: 0 0 10px var(--accent);
     transition: width 0.2s ease;
   }
   .progress-log {
     margin-top: 10px;
     font-family: 'IBM Plex Mono', monospace;
     font-size: 11.5px;
-    color: var(--ink-soft);
+    color: var(--text-dim);
     max-height: 60px;
     overflow-y: auto;
   }
@@ -385,21 +464,22 @@
   }
   .stats-strip.show { display: grid; }
   .stat-box {
-    background: var(--card);
+    background: var(--panel);
     padding: 14px 16px;
   }
   .stat-num {
     font-family: 'IBM Plex Mono', monospace;
     font-size: 24px;
     font-weight: 600;
-    color: var(--ledger);
+    color: var(--accent-light);
+    text-shadow: 0 0 12px rgba(53,214,255,0.4);
   }
   .stat-label {
     font-family: 'IBM Plex Mono', monospace;
     font-size: 10.5px;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    color: var(--ink-soft);
+    color: var(--text-dim);
   }
 
   /* ---------- FILTER BAR ---------- */
@@ -421,7 +501,7 @@
     font-family: 'IBM Plex Mono', monospace;
     font-size: 11.5px;
     text-transform: uppercase;
-    color: var(--ink-soft);
+    color: var(--text-dim);
     white-space: nowrap;
     flex-shrink: 0;
   }
@@ -430,8 +510,8 @@
     font-size: 12.5px;
     padding: 7px 8px;
     border: 1.5px solid var(--line);
-    background: var(--card);
-    color: var(--ink);
+    background: var(--panel);
+    color: var(--text);
     flex: 1;
     width: 100%;
     min-width: 0;
@@ -446,7 +526,7 @@
 
   .commander-card {
     position: relative;
-    background: var(--card);
+    background: var(--panel);
     border: 1.5px solid var(--line);
     border-top: none;
     padding: 22px 22px 20px 30px;
@@ -459,39 +539,61 @@
     content: "";
     position: absolute;
     top: 0; left: 0; right: 0;
-    height: 10px;
-    background-image: radial-gradient(circle, var(--paper) 3px, transparent 3.2px);
-    background-size: 22px 10px;
-    background-position: 8px 0;
-    background-repeat: repeat-x;
-    border-bottom: 1.5px solid var(--line);
+    height: 3px;
+    background: repeating-linear-gradient(
+      90deg, var(--accent) 0, var(--accent) 10px, transparent 10px, transparent 22px
+    );
+    opacity: 0.55;
   }
   .commander-card .tab {
     position: absolute;
     left: -1.5px; top: 14px;
     width: 8px; height: 46px;
-    background: var(--brass);
+    background: var(--accent);
+    box-shadow: 0 0 10px var(--accent);
   }
-  .commander-card.owned .tab { background: var(--g); }
+  .commander-card.owned .tab { background: var(--owned); box-shadow: 0 0 10px var(--owned); }
 
   .cc-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
   .cc-rank {
     font-family: 'IBM Plex Mono', monospace;
     font-size: 12px;
-    color: var(--brass);
+    color: var(--accent);
     font-weight: 600;
   }
   .cc-name {
-    font-family: 'Fraunces', serif;
+    font-family: 'Space Grotesk', sans-serif;
     font-size: 21px;
     font-weight: 600;
-    color: var(--ledger);
+    color: var(--accent-light);
     margin: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
   }
-  .cc-name a { text-decoration: none; border-bottom: 1px dotted var(--brass); }
+  .cc-name a { text-decoration: none; border-bottom: 1px dotted var(--accent); }
   .cc-name a:hover { border-bottom-style: solid; }
   .cc-pips { display: inline-flex; gap: 3px; }
-  .pip { width: 12px; height: 12px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.25); }
+  .pip { width: 12px; height: 12px; border-radius: 50%; border: 1px solid rgba(234,246,255,0.35); box-shadow: 0 0 4px rgba(53,214,255,0.25); }
+
+  .copy-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px; height: 22px;
+    flex-shrink: 0;
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    color: var(--text-dim);
+    cursor: pointer;
+    padding: 0;
+    transition: color 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+  }
+  .copy-btn:hover { color: var(--accent-light); border-color: var(--accent); box-shadow: 0 0 8px -2px var(--accent); }
+  .copy-btn.copied { color: var(--owned); border-color: var(--owned); box-shadow: 0 0 8px -2px var(--owned); }
+  .cc-cards-list .row-name { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+  .cc-cards-list .row-name a { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
   .cc-owned-flag {
     font-family: 'IBM Plex Mono', monospace;
@@ -507,7 +609,7 @@
   .cc-meta {
     font-family: 'IBM Plex Mono', monospace;
     font-size: 12px;
-    color: var(--ink-soft);
+    color: var(--text-dim);
     margin-top: 6px;
   }
 
@@ -515,10 +617,10 @@
     margin-top: 12px;
     font-family: 'IBM Plex Mono', monospace;
     font-size: 12px;
-    color: var(--ledger);
+    color: var(--accent-light);
     background: none;
     border: none;
-    border-bottom: 1px solid var(--ledger);
+    border-bottom: 1px solid var(--line);
     cursor: pointer;
     padding: 0;
   }
@@ -535,11 +637,11 @@
     display: flex;
     justify-content: space-between;
     padding: 3px 0;
-    border-bottom: 1px solid rgba(0,0,0,0.05);
+    border-bottom: 1px solid var(--line);
   }
-  .cc-cards-list .row .lift { color: var(--brass); font-weight: 600; }
-  .cc-cards-list .row a { color: var(--ink); text-decoration: none; border-bottom: 1px dotted var(--ink-soft); }
-  .cc-cards-list .row a:hover { border-bottom-style: solid; color: var(--ledger); }
+  .cc-cards-list .row .lift { color: var(--accent); font-weight: 600; }
+  .cc-cards-list .row a { color: var(--text); text-decoration: none; border-bottom: 1px dotted var(--text-dim); }
+  .cc-cards-list .row a:hover { border-bottom-style: solid; color: var(--accent-light); }
   .cc-cards-rest { display: none; }
   .cc-cards-rest.show { display: block; }
   .cc-cards-more {
@@ -547,10 +649,10 @@
     margin-top: 8px;
     font-family: 'IBM Plex Mono', monospace;
     font-size: 12px;
-    color: var(--brass);
+    color: var(--accent);
     background: none;
     border: none;
-    border-bottom: 1px dotted var(--brass);
+    border-bottom: 1px dotted var(--accent);
     cursor: pointer;
     padding: 0;
   }
@@ -586,8 +688,8 @@
     width: 100%;
     aspect-ratio: 63 / 88;
     border-radius: 4.5% / 3.3%;
-    box-shadow: 0 14px 30px rgba(0,0,0,0.4);
-    background: var(--card);
+    box-shadow: 0 14px 34px rgba(0,0,0,0.55), 0 0 0 1px var(--line), 0 0 26px -4px rgba(53,214,255,0.5);
+    background: var(--panel);
     overflow: hidden;
     cursor: pointer;
   }
@@ -609,7 +711,7 @@
     height: 34px;
     margin: -17px 0 0 -17px;
     border: 3px solid var(--line);
-    border-top-color: var(--brass);
+    border-top-color: var(--accent);
     border-radius: 50%;
     animation: card-spin 0.75s linear infinite;
   }
@@ -623,8 +725,9 @@
     height: 34px;
     border-radius: 50%;
     border: none;
-    background: rgba(15, 20, 16, 0.55);
-    color: #f4f1e6;
+    background: rgba(6, 10, 20, 0.65);
+    border: 1px solid var(--line);
+    color: var(--surface-text);
     font-size: 20px;
     line-height: 1;
     cursor: pointer;
@@ -633,7 +736,7 @@
     justify-content: center;
     z-index: 2;
   }
-  .cp-arrow:hover:not(:disabled) { background: rgba(15, 20, 16, 0.8); }
+  .cp-arrow:hover:not(:disabled) { background: rgba(6, 10, 20, 0.9); border-color: var(--accent); }
   .cp-arrow:disabled { opacity: 0.25; cursor: default; }
   .cp-arrow-left { left: 8px; }
   .cp-arrow-right { right: 8px; }
@@ -643,55 +746,70 @@
     text-align: center;
     font-family: 'IBM Plex Mono', monospace;
     font-size: 12px;
-    color: #f4f1e6;
+    color: var(--surface-text);
     min-height: 14px;
   }
-  .card-preview-meta .cp-lift { color: var(--brass-light); }
+  .card-preview-meta .cp-lift { color: var(--accent-light); }
   .card-preview-hint {
     display: none;
     margin-top: 10px;
     text-align: center;
     font-family: 'IBM Plex Mono', monospace;
     font-size: 12px;
-    color: #f4f1e6;
-    background: #1f3b32;
+    color: var(--surface-text);
+    background: var(--surface);
+    border: 1px solid var(--line);
     padding: 7px 10px;
   }
   .card-preview.touch-mode { pointer-events: auto; }
   .card-preview.touch-mode .card-preview-hint { display: block; }
 
-  /* ---------- STAMP ---------- */
+  /* ---------- STAMP (badge HUD) ---------- */
   .stamp {
-    width: 84px; height: 84px;
-    border: 3px double var(--stamp-red);
-    border-radius: 50%;
-    color: var(--stamp-red);
+    width: 78px; height: 78px;
+    border: 1px solid var(--danger);
+    border-radius: 10px;
+    color: var(--danger);
+    background: rgba(255, 61, 127, 0.07);
+    box-shadow: 0 0 16px -3px var(--danger), inset 0 0 10px -5px var(--danger);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    transform: rotate(-8deg);
     font-family: 'IBM Plex Mono', monospace;
     text-align: center;
     flex-shrink: 0;
-    mix-blend-mode: multiply;
+    position: relative;
   }
-  .commander-card.owned .stamp { border-color: var(--owned); color: var(--owned); }
-  html[data-theme="dark"] .stamp { mix-blend-mode: normal; }
-  .stamp .n { font-size: 22px; font-weight: 700; line-height: 1; }
+  .stamp::before, .stamp::after {
+    content: "";
+    position: absolute;
+    width: 8px; height: 8px;
+    border-color: inherit;
+    opacity: 0.9;
+  }
+  .stamp::before { top: -1px; left: -1px; border-top: 1.5px solid; border-left: 1.5px solid; }
+  .stamp::after { bottom: -1px; right: -1px; border-bottom: 1.5px solid; border-right: 1.5px solid; }
+  .commander-card.owned .stamp {
+    border-color: var(--owned);
+    color: var(--owned);
+    background: var(--owned-bg);
+    box-shadow: 0 0 16px -3px var(--owned), inset 0 0 10px -5px var(--owned);
+  }
+  .stamp .n { font-size: 22px; font-weight: 700; line-height: 1; text-shadow: 0 0 10px currentColor; }
   .stamp .u { font-size: 8px; letter-spacing: 0.05em; text-transform: uppercase; margin-top: 2px; }
 
   /* ---------- EMPTY / ERROR ---------- */
   .empty-note {
     font-family: 'IBM Plex Mono', monospace;
     font-size: 13px;
-    color: var(--ink-soft);
+    color: var(--text-dim);
     padding: 20px 0;
   }
   .error-note {
     font-family: 'IBM Plex Mono', monospace;
     font-size: 12.5px;
-    color: var(--stamp-red);
+    color: var(--danger);
     margin-top: 10px;
   }
   .load-more-btn {
@@ -705,7 +823,7 @@
     padding: 0 24px;
     font-family: 'IBM Plex Mono', monospace;
     font-size: 11px;
-    color: var(--ink-soft);
+    color: var(--text-dim);
     border-top: 1px solid var(--line);
     padding-top: 16px;
   }
@@ -725,68 +843,74 @@
 
 <header class="masthead">
   <div class="masthead-inner">
-    <div>
-      <p class="masthead-title">Correspondance Collection Moxfield × EDHREC</p>
+    <div class="masthead-brand">
+      <p class="masthead-title">M.E.C.A</p>
+      <p class="masthead-sub" id="mastheadSub"><span class="letter">M</span>oxfield x <span class="letter">E</span>DHREC, <span class="letter">C</span>ollection <span class="letter">A</span>nalyser</p>
     </div>
-    <button class="theme-toggle" id="themeToggle" type="button" aria-pressed="false" aria-label="Activer le thème sombre" title="Thème sombre">
-      <span class="ttk-sun">☀</span>
-      <span class="ttk-track"><span class="ttk-knob"></span></span>
-      <span class="ttk-moon">☾</span>
-    </button>
+    <div class="masthead-controls">
+      <button class="lang-toggle" id="langToggle" type="button" aria-pressed="false" data-i18n-aria="lang.switchTo" aria-label="Switch to English" data-i18n-title="lang.switchTo" title="Switch to English">
+        <span class="lang-fr">FR</span><span class="lang-sep">/</span><span class="lang-en">EN</span>
+      </button>
+      <button class="theme-toggle" id="themeToggle" type="button" aria-pressed="false" data-i18n-aria="theme.toLight" aria-label="Thème clair" data-i18n-title="theme.toLight" title="Thème clair">
+        <span class="ttk-sun">☀</span>
+        <span class="ttk-track"><span class="ttk-knob"></span></span>
+        <span class="ttk-moon">☾</span>
+      </button>
+    </div>
   </div>
 </header>
 
 <div class="wrap">
 
   <details class="help-panel">
-    <summary>Comment ça marche, et comment exporter mon CSV Moxfield</summary>
+    <summary data-i18n="help.summary">Comment ça marche, et comment exporter mon CSV Moxfield</summary>
     <div class="help-body">
-      <h4>Exporter ta collection depuis Moxfield</h4>
+      <h4 data-i18n="help.exportTitle">Exporter ta collection depuis Moxfield</h4>
       <ol>
-        <li>Va sur <code>moxfield.com</code> et ouvre ta <strong>Collection</strong>.</li>
-        <li>Clique sur le bouton <strong>Export</strong>.</li>
-        <li>Choisis le format <strong>CSV</strong> et télécharge le fichier.</li>
-        <li>Dépose ce fichier tel quel ci-dessous — l'app détecte automatiquement les colonnes utiles, quel que soit leur ordre.</li>
+        <li data-i18n="help.exportStep1">Va sur <code>moxfield.com</code> et ouvre ta <strong>Collection</strong>.</li>
+        <li data-i18n="help.exportStep2">Clique sur le bouton <strong>Export</strong>.</li>
+        <li data-i18n="help.exportStep3">Choisis le format <strong>CSV</strong> et télécharge le fichier.</li>
+        <li data-i18n="help.exportStep4">Dépose ce fichier tel quel ci-dessous — l'app détecte automatiquement les colonnes utiles, quel que soit leur ordre.</li>
       </ol>
 
-      <h4>Ce que fait l'outil</h4>
-      <p>Pour chaque carte unique de ta collection, l'app va chercher sur EDHREC la liste des commandants qui la jouent le plus souvent, et compare ce taux au taux de jeu <em>moyen</em> de la carte tous commandants confondus. Ça donne un score de <strong>synergie (lift)</strong> : une carte jouée bien plus souvent avec un commandant précis qu'ailleurs obtient un score élevé, alors qu'un staple joué partout (Sol Ring, Command Tower…) obtient un score proche de zéro, peu importe le commandant.</p>
-      <p>Ces scores sont additionnés par commandant, ce qui permet de classer les commandants selon la quantité de cartes de ta collection qui leur sont statistiquement liées.</p>
+      <h4 data-i18n="help.doTitle">Ce que fait l'outil</h4>
+      <p data-i18n="help.doP1">Pour chaque carte unique de ta collection, l'app va chercher sur EDHREC la liste des commandants qui la jouent le plus souvent, et compare ce taux au taux de jeu <em>moyen</em> de la carte tous commandants confondus. Ça donne un score de <strong>synergie (lift)</strong> : une carte jouée bien plus souvent avec un commandant précis qu'ailleurs obtient un score élevé, alors qu'un staple joué partout (Sol Ring, Command Tower…) obtient un score proche de zéro, peu importe le commandant.</p>
+      <p data-i18n="help.doP2">Ces scores sont additionnés par commandant, ce qui permet de classer les commandants selon la quantité de cartes de ta collection qui leur sont statistiquement liées.</p>
 
-      <h4>Ce que le résultat ne dit pas</h4>
-      <p>L'app ne propose pas de decklist complète ni un % de complétion par rapport à une liste type — volontairement, pour ne pas te limiter aux cartes déjà populaires et te faire passer à côté de pépites plus confidentielles de ta collection. Le score de synergie indique où ta collection est déjà utile, pas une garantie que ces cartes forment ensemble un deck cohérent et jouable tel quel.</p>
+      <h4 data-i18n="help.notTitle">Ce que le résultat ne dit pas</h4>
+      <p data-i18n="help.notP1">L'app ne propose pas de decklist complète ni un % de complétion par rapport à une liste type — volontairement, pour ne pas te limiter aux cartes déjà populaires et te faire passer à côté de pépites plus confidentielles de ta collection. Le score de synergie indique où ta collection est déjà utile, pas une garantie que ces cartes forment ensemble un deck cohérent et jouable tel quel.</p>
 
-      <h4>Confidentialité</h4>
-      <p>Aucune donnée n'est envoyée à un serveur autre qu'EDHREC lui-même. Le fichier CSV est lu et analysé entièrement dans ton navigateur ; les résultats sont mis en cache localement (IndexedDB) pour accélérer les prochaines analyses.</p>
+      <h4 data-i18n="help.privacyTitle">Confidentialité</h4>
+      <p data-i18n="help.privacyP1">Aucune donnée n'est envoyée à un serveur autre qu'EDHREC lui-même. Le fichier CSV est lu et analysé entièrement dans ton navigateur ; les résultats sont mis en cache localement (IndexedDB) pour accélérer les prochaines analyses.</p>
     </div>
   </details>
 
-  <h2 class="section-title">Déposer l'export Moxfield</h2>
+  <h2 class="section-title" data-i18n="section.dropTitle">Déposer l'export Moxfield</h2>
 
   <div class="dropzone" id="dropzone">
     <input type="file" id="fileInput" accept=".csv" />
-    <div class="dropzone-label">Glisse ton fichier .csv ici, ou clique pour le choisir</div>
+    <div class="dropzone-label" data-i18n="dropzone.label">Glisse ton fichier .csv ici, ou clique pour le choisir</div>
     <div class="dropzone-hint">MOXFIELD → COLLECTION → EXPORT → CSV</div>
     <div class="file-chip" id="fileChip" style="display:none;"></div>
   </div>
 
   <div class="settings-row">
     <div class="settings-field" style="max-width: 220px; min-width: 160px;">
-      <label for="minSample">Échantillon minimum (decks EDHREC)</label>
+      <label for="minSample" data-i18n="settings.minSample">Échantillon minimum (decks EDHREC)</label>
       <input type="number" id="minSample" value="120" min="0" />
     </div>
   </div>
 
   <div class="actions-row">
-    <button class="btn" id="startBtn" disabled>Lancer l'analyse</button>
-    <button class="btn secondary" id="restoreSessionBtn" style="display:none;">Récupérer dernière session</button>
-    <button class="btn secondary" id="clearCacheBtn">Vider le cache local</button>
+    <button class="btn" id="startBtn" disabled data-i18n="btn.start">Lancer l'analyse</button>
+    <button class="btn secondary" id="restoreSessionBtn" style="display:none;" data-i18n="btn.restoreSession">Récupérer dernière session</button>
+    <button class="btn secondary" id="clearCacheBtn" data-i18n="btn.clearCache">Vider le cache local</button>
     <span class="error-note" id="setupError"></span>
   </div>
 
   <div class="progress-panel" id="progressPanel">
     <div class="progress-top">
-      <span id="progressLabel">En attente…</span>
+      <span id="progressLabel" data-i18n="progress.idle">En attente…</span>
       <span id="progressCount">0 / 0</span>
     </div>
     <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
@@ -794,38 +918,38 @@
   </div>
 
   <div class="stats-strip" id="statsStrip">
-    <div class="stat-box"><div class="stat-num" id="statCards">—</div><div class="stat-label">Cartes uniques</div></div>
-    <div class="stat-box"><div class="stat-num" id="statFound">—</div><div class="stat-label">Trouvées sur EDHREC</div></div>
-    <div class="stat-box"><div class="stat-num" id="statCommanders">—</div><div class="stat-label">Commandants candidats</div></div>
-    <div class="stat-box"><div class="stat-num" id="statOwnedCommanders">—</div><div class="stat-label">Commandants déjà en collection</div></div>
-    <div class="stat-box"><div class="stat-num" id="statCache">—</div><div class="stat-label">Servies depuis le cache</div></div>
+    <div class="stat-box"><div class="stat-num" id="statCards">—</div><div class="stat-label" data-i18n="stat.cards">Cartes uniques</div></div>
+    <div class="stat-box"><div class="stat-num" id="statFound">—</div><div class="stat-label" data-i18n="stat.found">Trouvées sur EDHREC</div></div>
+    <div class="stat-box"><div class="stat-num" id="statCommanders">—</div><div class="stat-label" data-i18n="stat.commanders">Commandants candidats</div></div>
+    <div class="stat-box"><div class="stat-num" id="statOwnedCommanders">—</div><div class="stat-label" data-i18n="stat.ownedCommanders">Commandants déjà en collection</div></div>
+    <div class="stat-box"><div class="stat-num" id="statCache">—</div><div class="stat-label" data-i18n="stat.cache">Servies depuis le cache</div></div>
   </div>
 
   <details class="help-panel" id="notFoundPanel" style="display:none;">
-    <summary id="notFoundSummary">Cartes non trouvées sur EDHREC</summary>
+    <summary id="notFoundSummary" data-i18n="notfound.title">Cartes non trouvées sur EDHREC</summary>
     <div class="help-body">
-      <p>Ces cartes n'ont renvoyé aucune donnée EDHREC — jetons/emblèmes/produits scellés présents dans l'export, nom mal reconnu (accents ou caractères spéciaux), carte trop confidentielle pour être indexée, ou simple raté réseau ponctuel. Relance l'analyse pour écarter cette dernière hypothèse.</p>
+      <p data-i18n="notfound.body">Ces cartes n'ont renvoyé aucune donnée EDHREC — jetons/emblèmes/produits scellés présents dans l'export, nom mal reconnu (accents ou caractères spéciaux), carte trop confidentielle pour être indexée, ou simple raté réseau ponctuel. Relance l'analyse pour écarter cette dernière hypothèse.</p>
       <ul id="notFoundList"></ul>
     </div>
   </details>
 
-  <h2 class="section-title" id="resultsTitle" style="display:none;">Fiches commandants</h2>
-  <p class="section-note" id="resultsNote" style="display:none;">Classées par score de synergie : la somme, pour chaque commandant, du <em>lift</em> de tes cartes qui lui sont statistiquement associées (bien au-delà de leur taux de jeu moyen). Un score élevé = beaucoup de tes cartes de niche collent précisément à ce commandant — pas une comparaison avec une decklist type.</p>
+  <h2 class="section-title" id="resultsTitle" style="display:none;" data-i18n="results.title">Fiches commandants</h2>
+  <p class="section-note" id="resultsNote" style="display:none;" data-i18n="results.note">Classées par score de synergie : la somme, pour chaque commandant, du <em>lift</em> de tes cartes qui lui sont statistiquement associées (bien au-delà de leur taux de jeu moyen). Un score élevé = beaucoup de tes cartes de niche collent précisément à ce commandant — pas une comparaison avec une decklist type.</p>
 
   <div class="filter-bar" id="filterBar">
     <div class="filter-group">
-      <label for="sortSelect">Trier</label>
+      <label for="sortSelect" data-i18n="filter.sort">Trier</label>
       <select id="sortSelect">
-        <option value="score">Score de synergie</option>
-        <option value="matches">Nombre de cartes associées</option>
+        <option value="score" data-i18n="sort.score">Score de synergie</option>
+        <option value="matches" data-i18n="sort.matches">Nombre de cartes associées</option>
       </select>
     </div>
     <div class="filter-group">
-      <label for="ownedFilter">Filtrer</label>
+      <label for="ownedFilter" data-i18n="filter.filter">Filtrer</label>
       <select id="ownedFilter">
-        <option value="all">Tous les commandants</option>
-        <option value="owned">Uniquement ceux que je possède déjà</option>
-        <option value="missing">Uniquement à acheter</option>
+        <option value="all" data-i18n="owned.all">Tous les commandants</option>
+        <option value="owned" data-i18n="owned.owned">Uniquement ceux que je possède déjà</option>
+        <option value="missing" data-i18n="owned.missing">Uniquement à acheter</option>
       </select>
     </div>
   </div>
@@ -833,7 +957,7 @@
   <div id="results"></div>
 </div>
 
-<footer>
+<footer data-i18n="footer.text">
   Outil personnel — les requêtes vers EDHREC partent directement de ton navigateur. Aucune donnée de collection n'est stockée ailleurs que dans ton navigateur (IndexedDB).
 </footer>
 
@@ -842,11 +966,11 @@
   <div class="card-preview-frame" id="cardPreviewFrame">
     <div class="card-preview-spinner"></div>
     <img id="cardPreviewImg" src="" alt="" />
-    <button class="cp-arrow cp-arrow-left" id="cpPrevBtn" type="button" aria-label="Carte précédente">‹</button>
-    <button class="cp-arrow cp-arrow-right" id="cpNextBtn" type="button" aria-label="Carte suivante">›</button>
+    <button class="cp-arrow cp-arrow-left" id="cpPrevBtn" type="button" data-i18n-aria="preview.prev" aria-label="Carte précédente">‹</button>
+    <button class="cp-arrow cp-arrow-right" id="cpNextBtn" type="button" data-i18n-aria="preview.next" aria-label="Carte suivante">›</button>
   </div>
   <div class="card-preview-meta" id="cardPreviewMeta"></div>
-  <div class="card-preview-hint">Touche à nouveau la carte pour ouvrir sa page EDHREC ↗</div>
+  <div class="card-preview-hint" data-i18n="preview.hint">Touche à nouveau la carte pour ouvrir sa page EDHREC ↗</div>
 </div>
 
 <script>
@@ -867,12 +991,199 @@
   const MAX_RETRIES = 2; // nouvelles tentatives sur échec réseau transitoire
 
   const EDHREC_BASE = "https://json.edhrec.com";
+  const COPY_ICON = '<svg viewBox="0 0 20 20" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="7" y="7" width="10" height="10" rx="1.4"/><path d="M4.5 13.2H3.8A1.3 1.3 0 0 1 2.5 11.9V3.8A1.3 1.3 0 0 1 3.8 2.5h8.1a1.3 1.3 0 0 1 1.3 1.3v.7"/></svg>';
+  const COPY_ICON_CHECK = '<svg viewBox="0 0 20 20" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 10.5l3.8 3.8L16 6"/></svg>';
+
+  // ---------------------------------------------------------------------
+  // i18n
+  // ---------------------------------------------------------------------
+  const LANG_KEY = "moxedh_lang";
+  const I18N = {
+    fr: {
+      "help.summary": "Comment ça marche, et comment exporter mon CSV Moxfield",
+      "help.exportTitle": "Exporter ta collection depuis Moxfield",
+      "help.exportStep1": 'Va sur <code>moxfield.com</code> et ouvre ta <strong>Collection</strong>.',
+      "help.exportStep2": 'Clique sur le bouton <strong>Export</strong>.',
+      "help.exportStep3": 'Choisis le format <strong>CSV</strong> et télécharge le fichier.',
+      "help.exportStep4": "Dépose ce fichier tel quel ci-dessous — l'app détecte automatiquement les colonnes utiles, quel que soit leur ordre.",
+      "help.doTitle": "Ce que fait l'outil",
+      "help.doP1": "Pour chaque carte unique de ta collection, l'app va chercher sur EDHREC la liste des commandants qui la jouent le plus souvent, et compare ce taux au taux de jeu <em>moyen</em> de la carte tous commandants confondus. Ça donne un score de <strong>synergie (lift)</strong> : une carte jouée bien plus souvent avec un commandant précis qu'ailleurs obtient un score élevé, alors qu'un staple joué partout (Sol Ring, Command Tower…) obtient un score proche de zéro, peu importe le commandant.",
+      "help.doP2": "Ces scores sont additionnés par commandant, ce qui permet de classer les commandants selon la quantité de cartes de ta collection qui leur sont statistiquement liées.",
+      "help.notTitle": "Ce que le résultat ne dit pas",
+      "help.notP1": "L'app ne propose pas de decklist complète ni un % de complétion par rapport à une liste type — volontairement, pour ne pas te limiter aux cartes déjà populaires et te faire passer à côté de pépites plus confidentielles de ta collection. Le score de synergie indique où ta collection est déjà utile, pas une garantie que ces cartes forment ensemble un deck cohérent et jouable tel quel.",
+      "help.privacyTitle": "Confidentialité",
+      "help.privacyP1": "Aucune donnée n'est envoyée à un serveur autre qu'EDHREC lui-même (et Scryfall pour les images et le repli de recherche). Le fichier CSV est lu et analysé entièrement dans ton navigateur ; les résultats sont mis en cache localement (IndexedDB) pour accélérer les prochaines analyses.",
+      "section.dropTitle": "Déposer l'export Moxfield",
+      "dropzone.label": "Glisse ton fichier .csv ici, ou clique pour le choisir",
+      "settings.minSample": "Échantillon minimum (decks EDHREC)",
+      "btn.start": "Lancer l'analyse",
+      "btn.restoreSession": "Récupérer dernière session",
+      "btn.clearCache": "Vider le cache local",
+      "progress.idle": "En attente…",
+      "progress.fetching": "Récupération des pages EDHREC…",
+      "progress.aggregating": "Agrégation des scores…",
+      "progress.done": "Terminé.",
+      "stat.cards": "Cartes uniques",
+      "stat.found": "Trouvées sur EDHREC",
+      "stat.commanders": "Commandants candidats",
+      "stat.ownedCommanders": "Commandants déjà en collection",
+      "stat.cache": "Servies depuis le cache",
+      "notfound.title": "Cartes non trouvées sur EDHREC",
+      "notfound.body": "Ces cartes n'ont renvoyé aucune donnée EDHREC — jetons/emblèmes/produits scellés présents dans l'export, nom mal reconnu, carte trop confidentielle pour être indexée, ou simple raté réseau ponctuel. L'app tente automatiquement un repli via Scryfall avant d'abandonner. Relance l'analyse pour écarter l'hypothèse d'un raté réseau.",
+      "results.title": "Fiches commandants",
+      "results.note": "Classées par score de synergie : la somme, pour chaque commandant, du <em>lift</em> de tes cartes qui lui sont statistiquement associées (bien au-delà de leur taux de jeu moyen). Un score élevé = beaucoup de tes cartes de niche collent précisément à ce commandant — pas une comparaison avec une decklist type.",
+      "filter.sort": "Trier",
+      "filter.filter": "Filtrer",
+      "sort.score": "Score de synergie",
+      "sort.matches": "Nombre de cartes associées",
+      "owned.all": "Tous les commandants",
+      "owned.owned": "Uniquement ceux que je possède déjà",
+      "owned.missing": "Uniquement à acheter",
+      "footer.text": "Outil personnel — les requêtes vers EDHREC partent directement de ton navigateur. Aucune donnée de collection n'est stockée ailleurs que dans ton navigateur (IndexedDB).",
+      "preview.hint": "Touche à nouveau la carte pour ouvrir sa page EDHREC ↗",
+      "preview.prev": "Carte précédente",
+      "preview.next": "Carte suivante",
+      "theme.toLight": "Thème clair",
+      "theme.toDark": "Thème sombre",
+      "lang.switchTo": "Switch to English",
+      "error.noFile": "Dépose d'abord un fichier CSV.",
+      "error.emptyCsv": "Fichier CSV vide ou illisible.",
+      "error.noNameColumn": "Colonne du nom de carte introuvable dans le CSV.",
+      "error.readError": "Erreur de lecture : {msg}",
+      "error.noIndexedDb": "IndexedDB indisponible : le cache local ne fonctionnera pas dans ce navigateur.",
+      "log.cacheCleared": "Cache local vidé.",
+      "file.uniqueCards": "{file} · {count} cartes uniques",
+      "file.uniqueCardsRestored": "{file} · {count} cartes uniques (session restaurée)",
+      "session.restoreLabel": "Récupérer dernière session ({file} · {count} cartes)",
+      "notfound.summary": "{n} carte(s) non trouvée(s) sur EDHREC",
+      "retry.title": "Réessayer cette carte",
+      "retry.stillNotFound": "toujours introuvable",
+      "empty.note": "Aucun commandant ne correspond à ce filtre.",
+      "stamp.unitPlural": "cartes liées",
+      "stamp.unitSingular": "carte liée",
+      "cc.owned": "Déjà en collection",
+      "cc.meta": "Score de synergie : {score} · {n} carte(s) de ta collection associée(s)",
+      "cc.deckCount": " · {n} deck(s) recensés sur EDHREC",
+      "cc.toggleShow": "Voir les cartes associées ↓",
+      "cc.toggleHide": "Masquer les cartes associées ↑",
+      "cc.moreCards": "Voir {n} carte(s) de plus ↓",
+      "cc.moreCommanders": "Voir {a} commandant(s) de plus ({b} restant(s))",
+      "preview.meta": "{name} · synergie ×{lift} · {i} / {n}",
+      "copy.btn": "Copier le nom",
+    },
+    en: {
+      "help.summary": "How it works, and how to export your Moxfield CSV",
+      "help.exportTitle": "Export your collection from Moxfield",
+      "help.exportStep1": 'Go to <code>moxfield.com</code> and open your <strong>Collection</strong>.',
+      "help.exportStep2": 'Click the <strong>Export</strong> button.',
+      "help.exportStep3": 'Choose the <strong>CSV</strong> format and download the file.',
+      "help.exportStep4": "Drop that file as-is below — the app automatically detects the useful columns, whatever order they're in.",
+      "help.doTitle": "What the tool does",
+      "help.doP1": "For each unique card in your collection, the app looks up on EDHREC the list of commanders that play it most often, and compares that rate to the card's <em>average</em> play rate across all commanders. That gives a <strong>synergy (lift)</strong> score: a card played much more often with one specific commander than elsewhere gets a high score, while a staple played everywhere (Sol Ring, Command Tower…) scores close to zero, regardless of the commander.",
+      "help.doP2": "These scores are summed per commander, which ranks commanders by how many cards from your collection are statistically linked to them.",
+      "help.notTitle": "What the result doesn't tell you",
+      "help.notP1": "The app doesn't offer a full decklist or a completion % against a template list — deliberately, so you're not limited to already-popular cards and don't miss more niche gems in your collection. The synergy score shows where your collection is already useful, not a guarantee that these cards form a coherent, playable deck as-is.",
+      "help.privacyTitle": "Privacy",
+      "help.privacyP1": "No data is sent to any server other than EDHREC itself (and Scryfall for images and the search fallback). The CSV file is read and analyzed entirely in your browser; results are cached locally (IndexedDB) to speed up future analyses.",
+      "section.dropTitle": "Drop your Moxfield export",
+      "dropzone.label": "Drag your .csv file here, or click to choose it",
+      "settings.minSample": "Minimum sample (EDHREC decks)",
+      "btn.start": "Run analysis",
+      "btn.restoreSession": "Restore last session",
+      "btn.clearCache": "Clear local cache",
+      "progress.idle": "Waiting…",
+      "progress.fetching": "Fetching EDHREC pages…",
+      "progress.aggregating": "Aggregating scores…",
+      "progress.done": "Done.",
+      "stat.cards": "Unique cards",
+      "stat.found": "Found on EDHREC",
+      "stat.commanders": "Candidate commanders",
+      "stat.ownedCommanders": "Commanders already owned",
+      "stat.cache": "Served from cache",
+      "notfound.title": "Cards not found on EDHREC",
+      "notfound.body": "These cards returned no EDHREC data — tokens/emblems/sealed products present in the export, a name that wasn't recognized, a card too obscure to be indexed, or a one-off network hiccup. The app automatically tries a Scryfall fallback before giving up. Re-run the analysis to rule out a network hiccup.",
+      "results.title": "Commander sheets",
+      "results.note": "Ranked by synergy score: for each commander, the sum of the <em>lift</em> of your cards that are statistically linked to it (well beyond their average play rate). A high score = many of your niche cards fit precisely with this commander — not a comparison against a template decklist.",
+      "filter.sort": "Sort",
+      "filter.filter": "Filter",
+      "sort.score": "Synergy score",
+      "sort.matches": "Number of linked cards",
+      "owned.all": "All commanders",
+      "owned.owned": "Only ones I already own",
+      "owned.missing": "Only ones to buy",
+      "footer.text": "Personal tool — requests to EDHREC go straight from your browser. No collection data is stored anywhere other than your browser (IndexedDB).",
+      "preview.hint": "Tap the card again to open its EDHREC page ↗",
+      "preview.prev": "Previous card",
+      "preview.next": "Next card",
+      "theme.toLight": "Light theme",
+      "theme.toDark": "Dark theme",
+      "lang.switchTo": "Passer en français",
+      "error.noFile": "Drop a CSV file first.",
+      "error.emptyCsv": "CSV file is empty or unreadable.",
+      "error.noNameColumn": "Card name column not found in the CSV.",
+      "error.readError": "Read error: {msg}",
+      "error.noIndexedDb": "IndexedDB unavailable: local cache won't work in this browser.",
+      "log.cacheCleared": "Local cache cleared.",
+      "file.uniqueCards": "{file} · {count} unique cards",
+      "file.uniqueCardsRestored": "{file} · {count} unique cards (session restored)",
+      "session.restoreLabel": "Restore last session ({file} · {count} cards)",
+      "notfound.summary": "{n} card(s) not found on EDHREC",
+      "retry.title": "Retry this card",
+      "retry.stillNotFound": "still not found",
+      "empty.note": "No commander matches this filter.",
+      "stamp.unitPlural": "linked cards",
+      "stamp.unitSingular": "linked card",
+      "cc.owned": "Already owned",
+      "cc.meta": "Synergy score: {score} · {n} card(s) from your collection linked",
+      "cc.deckCount": " · {n} deck(s) recorded on EDHREC",
+      "cc.toggleShow": "Show linked cards ↓",
+      "cc.toggleHide": "Hide linked cards ↑",
+      "cc.moreCards": "Show {n} more card(s) ↓",
+      "cc.moreCommanders": "Show {a} more commander(s) ({b} remaining)",
+      "preview.meta": "{name} · synergy ×{lift} · {i} / {n}",
+      "copy.btn": "Copy name",
+    },
+  };
+
+  let currentLang = "fr";
+  try {
+    currentLang = localStorage.getItem(LANG_KEY) === "en" ? "en" : "fr";
+  } catch (e) {}
+
+  function t(key, vars) {
+    const dict = I18N[currentLang] || I18N.fr;
+    let str = dict[key] != null ? dict[key] : (I18N.fr[key] != null ? I18N.fr[key] : key);
+    if (vars) {
+      for (const k in vars) str = str.split("{" + k + "}").join(vars[k]);
+    }
+    return str;
+  }
+
+  function applyI18n() {
+    document.documentElement.setAttribute("lang", currentLang);
+    document.querySelectorAll("[data-i18n]").forEach((el) => {
+      el.innerHTML = t(el.getAttribute("data-i18n"));
+    });
+    document.querySelectorAll("[data-i18n-title]").forEach((el) => {
+      el.setAttribute("title", t(el.getAttribute("data-i18n-title")));
+    });
+    document.querySelectorAll("[data-i18n-aria]").forEach((el) => {
+      el.setAttribute("aria-label", t(el.getAttribute("data-i18n-aria")));
+    });
+    document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
+      el.setAttribute("placeholder", t(el.getAttribute("data-i18n-placeholder")));
+    });
+  }
 
   let db = null;
   let collection = new Map(); // slug -> { name, qty }
   let allCommanders = []; // résultats agrégés
   let lastFetchResults = []; // résultats bruts de la dernière analyse (pour ré-agréger après un retry)
   let lastMinSample = 0;
+  let progressStateKey = "progress.idle";
+  let lastNotFoundItems = [];
+  let currentFileLabel = null; // { fileName, count, restored }
+  let lastSessionInfo = null; // { fileName, count }
 
   const $ = (id) => document.getElementById(id);
 
@@ -1030,11 +1341,11 @@
 
   function parseMoxfieldCsv(text) {
     const rows = parseCsv(text);
-    if (rows.length < 2) throw new Error("Fichier CSV vide ou illisible.");
+    if (rows.length < 2) throw new Error(t("error.emptyCsv"));
     const header = rows[0];
     const nameIdx = findColumnIndex(header, ["name", "card name", "card"]);
     const qtyIdx = findColumnIndex(header, ["count", "quantity", "qty"]);
-    if (nameIdx === -1) throw new Error("Colonne du nom de carte introuvable dans le CSV.");
+    if (nameIdx === -1) throw new Error(t("error.noNameColumn"));
 
     const map = new Map();
     for (let i = 1; i < rows.length; i++) {
@@ -1060,33 +1371,70 @@
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
-  async function fetchCardPage(slug) {
-    const cached = await idbGet(STORE_CARDS, slug);
-    if (cached && Date.now() - cached.fetchedAt < CACHE_MAX_AGE_MS) {
-      return { data: cached.data, fromCache: true, notFound: cached.notFound || false };
+  async function resolveEdhrecSlugViaScryfall(name) {
+    try {
+      const url = "https://api.scryfall.com/cards/named?fuzzy=" + encodeURIComponent(name);
+      const res = await fetch(url);
+      if (!res.ok) return null;
+      const json = await res.json();
+      const edhrecUrl = json.related_uris && json.related_uris.edhrec;
+      if (!edhrecUrl) return null;
+      const m = edhrecUrl.match(/\/cards\/([^/?#]+)/);
+      return m ? m[1] : null;
+    } catch (err) {
+      return null;
     }
+  }
 
+  async function fetchCardPageRaw(slug) {
     const url = EDHREC_BASE + "/pages/cards/" + encodeURIComponent(slug) + ".json";
-
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
       try {
         const res = await fetch(url);
-        if (res.status === 404) {
-          await idbSet(STORE_CARDS, { slug, data: null, notFound: true, fetchedAt: Date.now() });
-          return { data: null, fromCache: false, notFound: true };
-        }
+        if (res.status === 404) return { data: null, notFound: true };
         if (!res.ok) throw new Error("HTTP " + res.status);
         const json = await res.json();
-        await idbSet(STORE_CARDS, { slug, data: json, notFound: false, fetchedAt: Date.now() });
-        return { data: json, fromCache: false, notFound: false };
+        return { data: json, notFound: false };
       } catch (err) {
         if (attempt < MAX_RETRIES) {
           await sleep(300 * (attempt + 1));
           continue;
         }
-        return { data: null, fromCache: false, notFound: false, error: String(err) };
+        return { data: null, notFound: false, error: String(err) };
       }
     }
+  }
+
+  // Tente la page carte EDHREC via le slug local ; si 404, retombe sur
+  // l'API Scryfall (fuzzy match par nom) pour récupérer le slug EDHREC
+  // exact via related_uris.edhrec, puis réessaie avec ce slug. Corrige
+  // les cas où la normalisation locale du nom diverge de celle d'EDHREC
+  // (ex : cartes Universes Beyond avec ponctuation/casse particulière).
+  async function fetchCardPage(slug, cardName) {
+    const cached = await idbGet(STORE_CARDS, slug);
+    if (cached && Date.now() - cached.fetchedAt < CACHE_MAX_AGE_MS) {
+      return { data: cached.data, fromCache: true, notFound: cached.notFound || false };
+    }
+
+    const direct = await fetchCardPageRaw(slug);
+    if (direct.data) {
+      await idbSet(STORE_CARDS, { slug, data: direct.data, notFound: false, fetchedAt: Date.now() });
+      return { data: direct.data, fromCache: false, notFound: false };
+    }
+
+    if (direct.notFound && cardName) {
+      const altSlug = await resolveEdhrecSlugViaScryfall(cardName);
+      if (altSlug && altSlug !== slug) {
+        const alt = await fetchCardPageRaw(altSlug);
+        if (alt.data) {
+          await idbSet(STORE_CARDS, { slug, data: alt.data, notFound: false, fetchedAt: Date.now(), viaScryfall: true });
+          return { data: alt.data, fromCache: false, notFound: false, viaScryfall: true };
+        }
+      }
+    }
+
+    await idbSet(STORE_CARDS, { slug, data: null, notFound: true, fetchedAt: Date.now() });
+    return { data: null, fromCache: false, notFound: direct.notFound, error: direct.error };
   }
 
   async function fetchCommanderPage(slug) {
@@ -1298,7 +1646,7 @@
     els.results.innerHTML = "";
 
     if (list.length === 0) {
-      els.results.innerHTML = '<p class="empty-note">Aucun commandant ne correspond à ce filtre.</p>';
+      els.results.innerHTML = `<p class="empty-note">${t("empty.note")}</p>`;
       return;
     }
 
@@ -1314,18 +1662,18 @@
         .join("");
 
       const stampValue = c.matches.length;
-      const stampUnit = c.matches.length > 1 ? "cartes liées" : "carte liée";
+      const stampUnit = c.matches.length > 1 ? t("stamp.unitPlural") : t("stamp.unitSingular");
 
       const INITIAL_VISIBLE = 30;
       const rowHtml = (m, idx) =>
-        `<div class="row"><span><a class="card-hover-link" href="${m.cardUrl}" target="_blank" rel="noopener" data-card="${escapeHtml(m.cardName)}" data-commander-slug="${escapeHtml(c.slug)}" data-match-index="${idx}">${escapeHtml(m.cardName)}</a></span><span class="lift">×${m.lift.toFixed(1)}</span></div>`;
+        `<div class="row"><span class="row-name"><a class="card-hover-link" href="${m.cardUrl}" target="_blank" rel="noopener" data-card="${escapeHtml(m.cardName)}" data-commander-slug="${escapeHtml(c.slug)}" data-match-index="${idx}">${escapeHtml(m.cardName)}</a><button type="button" class="copy-btn" data-copy-text="${escapeHtml(m.cardName)}" title="${t("copy.btn")}" aria-label="${t("copy.btn")}">${COPY_ICON}</button></span><span class="lift">×${m.lift.toFixed(1)}</span></div>`;
 
       const matchRows = c.matches.map((m, idx) => (idx < INITIAL_VISIBLE ? rowHtml(m, idx) : "")).join("");
       const restRows = c.matches.map((m, idx) => (idx >= INITIAL_VISIBLE ? rowHtml(m, idx) : "")).join("");
       const restCount = Math.max(0, c.matches.length - INITIAL_VISIBLE);
 
       const deckCountText = c.totalDecksSample
-        ? c.totalDecksSample.toLocaleString("fr-FR") + " deck(s) recensés sur EDHREC"
+        ? t("cc.deckCount", { n: c.totalDecksSample.toLocaleString(currentLang === "en" ? "en-US" : "fr-FR") })
         : "";
 
       card.innerHTML = `
@@ -1333,15 +1681,15 @@
         <div>
           <div class="cc-head">
             <span class="cc-rank">N°${i + 1}</span>
-            <h3 class="cc-name"><a class="card-hover-link" href="${c.url}" target="_blank" rel="noopener" data-card="${escapeHtml(c.name)}">${escapeHtml(c.name)}</a></h3>
+            <h3 class="cc-name"><a class="card-hover-link" href="${c.url}" target="_blank" rel="noopener" data-card="${escapeHtml(c.name)}">${escapeHtml(c.name)}</a><button type="button" class="copy-btn" data-copy-text="${escapeHtml(c.name)}" title="${t("copy.btn")}" aria-label="${t("copy.btn")}">${COPY_ICON}</button></h3>
             <span class="cc-pips">${pips}</span>
-            ${c.isOwned ? '<span class="cc-owned-flag">Déjà en collection</span>' : ""}
+            ${c.isOwned ? `<span class="cc-owned-flag">${t("cc.owned")}</span>` : ""}
           </div>
-          <div class="cc-meta">Score de synergie : ${c.totalLift.toFixed(1)} · ${c.matches.length} carte(s) de ta collection associée(s)${deckCountText ? " · " + deckCountText : ""}</div>
-          <button class="cc-cards-toggle" type="button">Voir les cartes associées ↓</button>
+          <div class="cc-meta">${t("cc.meta", { score: c.totalLift.toFixed(1), n: c.matches.length })}${deckCountText}</div>
+          <button class="cc-cards-toggle" type="button">${t("cc.toggleShow")}</button>
           <div class="cc-cards-list">
             ${matchRows}
-            ${restCount > 0 ? `<div class="cc-cards-rest">${restRows}</div><button class="cc-cards-more" type="button">Voir ${restCount} carte(s) de plus ↓</button>` : ""}
+            ${restCount > 0 ? `<div class="cc-cards-rest">${restRows}</div><button class="cc-cards-more" type="button">${t("cc.moreCards", { n: restCount })}</button>` : ""}
           </div>
         </div>
         <div class="stamp"><span class="n">${stampValue}</span><span class="u">${stampUnit}</span></div>
@@ -1352,8 +1700,8 @@
       toggle.addEventListener("click", () => {
         listEl.classList.toggle("show");
         toggle.textContent = listEl.classList.contains("show")
-          ? "Masquer les cartes associées ↑"
-          : "Voir les cartes associées ↓";
+          ? t("cc.toggleHide")
+          : t("cc.toggleShow");
       });
 
       const moreBtn = card.querySelector(".cc-cards-more");
@@ -1377,8 +1725,10 @@
       const loadMoreBtn = document.createElement("button");
       loadMoreBtn.className = "btn secondary load-more-btn";
       loadMoreBtn.type = "button";
-      loadMoreBtn.textContent =
-        "Voir " + Math.min(COMMANDER_PAGE_SIZE, remaining) + " commandant(s) de plus (" + remaining + " restant(s))";
+      loadMoreBtn.textContent = t("cc.moreCommanders", {
+        a: Math.min(COMMANDER_PAGE_SIZE, remaining),
+        b: remaining,
+      });
       loadMoreBtn.addEventListener("click", () => {
         visibleCommanderCount += COMMANDER_PAGE_SIZE;
         renderResults();
@@ -1392,13 +1742,14 @@
   }
 
   function renderNotFoundList(notFoundItems) {
+    lastNotFoundItems = notFoundItems;
     if (notFoundItems.length === 0) {
       els.notFoundPanel.style.display = "none";
       els.notFoundList.innerHTML = "";
       return;
     }
     els.notFoundPanel.style.display = "block";
-    els.notFoundSummary.textContent = notFoundItems.length + " carte(s) non trouvée(s) sur EDHREC";
+    els.notFoundSummary.textContent = t("notfound.summary", { n: notFoundItems.length });
     els.notFoundList.innerHTML = notFoundItems
       .slice()
       .sort((a, b) => a.name.localeCompare(b.name))
@@ -1406,7 +1757,7 @@
         (it) => `
         <li data-slug="${escapeHtml(it.slug)}">
           <a class="card-hover-link" href="${scryfallSearchUrl(it.name)}" target="_blank" rel="noopener" data-card="${escapeHtml(it.name)}">${escapeHtml(it.name)}</a>
-          <button class="retry-card-btn" type="button" title="Réessayer cette carte" aria-label="Réessayer cette carte">↻</button>
+          <button class="retry-card-btn" type="button" title="${t("retry.title")}" aria-label="${t("retry.title")}">↻</button>
           <span class="retry-status"></span>
         </li>`
       )
@@ -1425,7 +1776,7 @@
     status.textContent = "";
 
     await idbDelete(STORE_CARDS, slug);
-    const { data, notFound } = await fetchCardPage(slug);
+    const { data, notFound } = await fetchCardPage(slug, name);
 
     btn.classList.remove("spinning");
 
@@ -1434,11 +1785,12 @@
 
     if (data && !notFound) {
       li.remove();
+      lastNotFoundItems = lastNotFoundItems.filter((it) => it.slug !== slug);
       const remaining = els.notFoundList.querySelectorAll("li").length;
       if (remaining === 0) {
         els.notFoundPanel.style.display = "none";
       } else {
-        els.notFoundSummary.textContent = remaining + " carte(s) non trouvée(s) sur EDHREC";
+        els.notFoundSummary.textContent = t("notfound.summary", { n: remaining });
       }
       // Ré-agrège avec la carte nouvellement trouvée et rafraîchit l'affichage
       allCommanders = aggregate(lastFetchResults, lastMinSample);
@@ -1446,7 +1798,7 @@
       renderResults();
     } else {
       btn.disabled = false;
-      status.textContent = "toujours introuvable";
+      status.textContent = t("retry.stillNotFound");
     }
   }
 
@@ -1454,6 +1806,52 @@
     const btn = e.target.closest(".retry-card-btn");
     if (!btn) return;
     retryNotFoundCard(btn.closest("li"));
+  });
+
+  // ---------------------------------------------------------------------
+  // Copie du nom de carte
+  // ---------------------------------------------------------------------
+  function copyCardName(btn) {
+    const text = btn.dataset.copyText || "";
+    if (!text) return;
+    const done = () => {
+      btn.innerHTML = COPY_ICON_CHECK;
+      btn.classList.add("copied");
+      clearTimeout(btn._copyResetTimer);
+      btn._copyResetTimer = setTimeout(() => {
+        btn.innerHTML = COPY_ICON;
+        btn.classList.remove("copied");
+      }, 1200);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
+    } else {
+      fallbackCopy(text, done);
+    }
+  }
+
+  function fallbackCopy(text, done) {
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      done();
+    } catch (err) {
+      /* copie impossible : on ignore silencieusement */
+    }
+  }
+
+  document.body.addEventListener("click", (e) => {
+    const btn = e.target.closest(".copy-btn");
+    if (!btn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    copyCardName(btn);
   });
 
   function escapeHtml(s) {
@@ -1482,7 +1880,7 @@
   async function startAnalysis() {
     els.setupError.textContent = "";
     if (collection.size === 0) {
-      els.setupError.textContent = "Dépose d'abord un fichier CSV.";
+      els.setupError.textContent = t("error.noFile");
       return;
     }
 
@@ -1500,12 +1898,12 @@
     const seenCommanders = new Set();
     const ownedCommanderSlugs = new Set();
 
-    els.progressLabel.textContent = "Récupération des pages EDHREC…";
+    progressStateKey = "progress.fetching"; els.progressLabel.textContent = t("progress.fetching");
 
     const results = await runPool(
       items,
       async (item) => {
-        const { data, fromCache: fc, notFound } = await fetchCardPage(item.slug);
+        const { data, fromCache: fc, notFound } = await fetchCardPage(item.slug, item.name);
         if (fc) fromCache++;
         if (data && !notFound) {
           found++;
@@ -1540,12 +1938,12 @@
     lastFetchResults = results;
     lastMinSample = minSample;
 
-    els.progressLabel.textContent = "Agrégation des scores…";
+    progressStateKey = "progress.aggregating"; els.progressLabel.textContent = t("progress.aggregating");
     allCommanders = aggregate(results, minSample);
 
     els.statCommanders.textContent = allCommanders.length;
     els.statOwnedCommanders.textContent = ownedCommanderSlugs.size;
-    els.progressLabel.textContent = "Terminé.";
+    progressStateKey = "progress.done"; els.progressLabel.textContent = t("progress.done");
     els.progressFill.style.width = "100%";
 
     renderNotFoundList(notFoundItems);
@@ -1562,6 +1960,22 @@
   // ---------------------------------------------------------------------
   // Événements UI
   // ---------------------------------------------------------------------
+  function updateFileChipLabel() {
+    if (!currentFileLabel) return;
+    els.fileChip.textContent = t(
+      currentFileLabel.restored ? "file.uniqueCardsRestored" : "file.uniqueCards",
+      { file: currentFileLabel.fileName, count: currentFileLabel.count }
+    );
+  }
+
+  function updateRestoreBtnLabel() {
+    if (!lastSessionInfo) return;
+    els.restoreSessionBtn.textContent = t("session.restoreLabel", {
+      file: lastSessionInfo.fileName,
+      count: lastSessionInfo.count,
+    });
+  }
+
   function handleFile(file) {
     if (!file) return;
     const reader = new FileReader();
@@ -1569,12 +1983,13 @@
       try {
         collection = parseMoxfieldCsv(reader.result);
         els.fileChip.style.display = "inline-block";
-        els.fileChip.textContent = file.name + " · " + collection.size + " cartes uniques";
+        currentFileLabel = { fileName: file.name, count: collection.size, restored: false };
+        updateFileChipLabel();
         els.startBtn.disabled = false;
         els.setupError.textContent = "";
         saveSession(file.name);
       } catch (err) {
-        els.setupError.textContent = "Erreur de lecture : " + err.message;
+        els.setupError.textContent = t("error.readError", { msg: err.message });
         els.startBtn.disabled = true;
       }
     };
@@ -1594,8 +2009,8 @@
     const saved = await idbGet(STORE_SESSION, "lastCollection");
     if (saved && saved.items && saved.items.length > 0) {
       els.restoreSessionBtn.style.display = "inline-block";
-      els.restoreSessionBtn.textContent =
-        "Récupérer dernière session (" + saved.fileName + " · " + saved.items.length + " cartes)";
+      lastSessionInfo = { fileName: saved.fileName, count: saved.items.length };
+      updateRestoreBtnLabel();
     }
   }
 
@@ -1604,7 +2019,8 @@
     if (!saved || !saved.items) return;
     collection = new Map(saved.items.map((it) => [it.slug, it]));
     els.fileChip.style.display = "inline-block";
-    els.fileChip.textContent = saved.fileName + " · " + collection.size + " cartes uniques (session restaurée)";
+    currentFileLabel = { fileName: saved.fileName, count: collection.size, restored: true };
+    updateFileChipLabel();
     els.startBtn.disabled = false;
     els.setupError.textContent = "";
   });
@@ -1625,7 +2041,7 @@
   els.clearCacheBtn.addEventListener("click", async () => {
     await idbClearAll();
     els.restoreSessionBtn.style.display = "none";
-    logLine("Cache local vidé.");
+    logLine(t("log.cacheCleared"));
   });
 
   // -------------------------------------------------------------------
@@ -1672,9 +2088,12 @@
       cpPrevBtn.disabled = navIndex <= 0;
       cpNextBtn.disabled = navIndex >= commander.matches.length - 1;
       const m = commander.matches[navIndex];
-      cardPreviewMeta.innerHTML =
-        escapeHtml(m.cardName) + ' · synergie ×<span class="cp-lift">' + m.lift.toFixed(1) + "</span> · " +
-        (navIndex + 1) + " / " + commander.matches.length;
+      cardPreviewMeta.innerHTML = t("preview.meta", {
+        name: escapeHtml(m.cardName),
+        lift: '<span class="cp-lift">' + m.lift.toFixed(1) + "</span>",
+        i: navIndex + 1,
+        n: commander.matches.length,
+      });
     } else {
       cardPreview.classList.remove("has-nav");
       cardPreviewMeta.innerHTML = "";
@@ -1755,27 +2174,54 @@
   cardPreviewBackdrop.addEventListener("click", hideCardPreview);
 
   // -------------------------------------------------------------------
-  // Thème sombre / clair
+  // Thème sombre (défaut) / clair
   // -------------------------------------------------------------------
   const themeToggle = $("themeToggle");
-  function applyTheme(dark) {
-    if (dark) document.documentElement.setAttribute("data-theme", "dark");
+  function applyTheme(light) {
+    if (light) document.documentElement.setAttribute("data-theme", "light");
     else document.documentElement.removeAttribute("data-theme");
-    themeToggle.setAttribute("aria-pressed", dark ? "true" : "false");
-    themeToggle.title = dark ? "Thème clair" : "Thème sombre";
+    themeToggle.setAttribute("aria-pressed", light ? "true" : "false");
+    const label = t(light ? "theme.toDark" : "theme.toLight");
+    themeToggle.title = label;
+    themeToggle.setAttribute("aria-label", label);
   }
-  applyTheme(document.documentElement.getAttribute("data-theme") === "dark");
+  applyTheme(document.documentElement.getAttribute("data-theme") === "light");
   themeToggle.addEventListener("click", () => {
-    const dark = document.documentElement.getAttribute("data-theme") !== "dark";
-    applyTheme(dark);
-    try { localStorage.setItem("moxedh_theme", dark ? "dark" : "light"); } catch (e) {}
+    const light = document.documentElement.getAttribute("data-theme") !== "light";
+    applyTheme(light);
+    try { localStorage.setItem("moxedh_theme", light ? "light" : "dark"); } catch (e) {}
   });
+
+  // -------------------------------------------------------------------
+  // Langue FR / EN
+  // -------------------------------------------------------------------
+  const langToggle = $("langToggle");
+  function applyLang() {
+    document.title = "M.E.C.A — Moxfield x EDHREC Collection Analyser";
+    applyI18n();
+    langToggle.setAttribute("aria-pressed", currentLang === "en" ? "true" : "false");
+    const nextLabel = t("lang.switchTo");
+    langToggle.title = nextLabel;
+    langToggle.setAttribute("aria-label", nextLabel);
+    applyTheme(document.documentElement.getAttribute("data-theme") === "light");
+    updateFileChipLabel();
+    updateRestoreBtnLabel();
+    els.progressLabel.textContent = t(progressStateKey);
+    if (allCommanders.length) renderResults();
+    if (lastNotFoundItems.length) renderNotFoundList(lastNotFoundItems);
+  }
+  langToggle.addEventListener("click", () => {
+    currentLang = currentLang === "en" ? "fr" : "en";
+    try { localStorage.setItem(LANG_KEY, currentLang); } catch (e) {}
+    applyLang();
+  });
+  applyLang();
 
   openDb().then((_db) => {
     db = _db;
     checkForSavedSession();
   }).catch(() => {
-    els.setupError.textContent = "IndexedDB indisponible : le cache local ne fonctionnera pas dans ce navigateur.";
+    els.setupError.textContent = t("error.noIndexedDb");
   });
 })();
 </script>
