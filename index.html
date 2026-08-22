@@ -183,11 +183,14 @@
     background: none;
     border: none;
     cursor: pointer;
-    color: var(--bg-dim);
+    color: var(--surface-text);
     font-size: 13px;
     padding: 4px;
     flex-shrink: 0;
   }
+  .ttk-sun, .ttk-moon { opacity: 0.65; transition: opacity 0.2s ease; }
+  .theme-toggle[aria-pressed="true"] .ttk-sun { opacity: 1; }
+  .theme-toggle[aria-pressed="false"] .ttk-moon { opacity: 1; }
   .ttk-track {
     width: 34px;
     height: 19px;
@@ -297,10 +300,16 @@
     cursor: pointer;
     padding: 3px 7px;
     flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
-  .retry-card-btn:hover:not(:disabled) { background: var(--accent-light); }
+  @media (hover: hover) {
+    .retry-card-btn:hover:not(:disabled) { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-light); }
+  }
   .retry-card-btn:disabled { cursor: default; opacity: 0.6; }
-  .retry-card-btn.spinning { animation: card-spin 0.7s linear infinite; }
+  .retry-icon { display: inline-block; }
+  .retry-card-btn.spinning .retry-icon { animation: card-spin 0.7s linear infinite; }
   .retry-status {
     font-family: 'IBM Plex Mono', monospace;
     font-size: 11px;
@@ -508,17 +517,30 @@
   select {
     font-family: 'IBM Plex Mono', monospace;
     font-size: 12.5px;
-    padding: 7px 8px;
+    padding: 7px 30px 7px 10px;
     border: 1.5px solid var(--line);
-    background: var(--panel);
+    background-color: var(--panel);
     color: var(--text);
     flex: 1;
     width: 100%;
     min-width: 0;
+    border-radius: 3px;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, var(--accent-light) 50%), linear-gradient(135deg, var(--accent-light) 50%, transparent 50%);
+    background-position: calc(100% - 16px) center, calc(100% - 11px) center;
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
+    cursor: pointer;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
   }
+  select:hover { border-color: var(--accent); }
+  select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 10px -2px var(--accent); }
+  select option { background: var(--panel); color: var(--text); }
   @media (max-width: 560px) {
-    .filter-bar { flex-direction: column; align-items: stretch; }
-    .filter-group { width: 100%; }
+    .filter-bar { flex-direction: column; align-items: stretch; gap: 14px; }
+    .filter-group { width: 100%; flex-direction: column; align-items: flex-start; gap: 5px; }
   }
 
   /* ---------- RESULTS ---------- */
@@ -750,6 +772,7 @@
     min-height: 14px;
   }
   .card-preview-meta .cp-lift { color: var(--accent-light); }
+  html[data-theme="light"] .card-preview-meta .cp-lift { color: var(--accent-2); font-weight: 600; }
   .card-preview-hint {
     display: none;
     margin-top: 10px;
@@ -781,15 +804,6 @@
     flex-shrink: 0;
     position: relative;
   }
-  .stamp::before, .stamp::after {
-    content: "";
-    position: absolute;
-    width: 8px; height: 8px;
-    border-color: inherit;
-    opacity: 0.9;
-  }
-  .stamp::before { top: -1px; left: -1px; border-top: 1.5px solid; border-left: 1.5px solid; }
-  .stamp::after { bottom: -1px; right: -1px; border-bottom: 1.5px solid; border-right: 1.5px solid; }
   .commander-card.owned .stamp {
     border-color: var(--owned);
     color: var(--owned);
@@ -852,9 +866,9 @@
         <span class="lang-fr">FR</span><span class="lang-sep">/</span><span class="lang-en">EN</span>
       </button>
       <button class="theme-toggle" id="themeToggle" type="button" aria-pressed="false" data-i18n-aria="theme.toLight" aria-label="Thème clair" data-i18n-title="theme.toLight" title="Thème clair">
-        <span class="ttk-sun">☀</span>
-        <span class="ttk-track"><span class="ttk-knob"></span></span>
         <span class="ttk-moon">☾</span>
+        <span class="ttk-track"><span class="ttk-knob"></span></span>
+        <span class="ttk-sun">☀</span>
       </button>
     </div>
   </div>
@@ -923,6 +937,7 @@
     <div class="stat-box"><div class="stat-num" id="statCommanders">—</div><div class="stat-label" data-i18n="stat.commanders">Commandants candidats</div></div>
     <div class="stat-box"><div class="stat-num" id="statOwnedCommanders">—</div><div class="stat-label" data-i18n="stat.ownedCommanders">Commandants déjà en collection</div></div>
     <div class="stat-box"><div class="stat-num" id="statCache">—</div><div class="stat-label" data-i18n="stat.cache">Servies depuis le cache</div></div>
+    <div class="stat-box"><div class="stat-num" id="statNotFound">—</div><div class="stat-label" data-i18n="stat.notFound">Non trouvées sur EDHREC</div></div>
   </div>
 
   <details class="help-panel" id="notFoundPanel" style="display:none;">
@@ -970,7 +985,7 @@
     <button class="cp-arrow cp-arrow-right" id="cpNextBtn" type="button" data-i18n-aria="preview.next" aria-label="Carte suivante">›</button>
   </div>
   <div class="card-preview-meta" id="cardPreviewMeta"></div>
-  <div class="card-preview-hint" data-i18n="preview.hint">Touche à nouveau la carte pour ouvrir sa page EDHREC ↗</div>
+  <div class="card-preview-hint" id="cardPreviewHint">Touche à nouveau la carte pour ouvrir sa page EDHREC ↗</div>
 </div>
 
 <script>
@@ -1028,6 +1043,7 @@
       "stat.commanders": "Commandants candidats",
       "stat.ownedCommanders": "Commandants déjà en collection",
       "stat.cache": "Servies depuis le cache",
+      "stat.notFound": "Non trouvées sur EDHREC",
       "notfound.title": "Cartes non trouvées sur EDHREC",
       "notfound.body": "Ces cartes n'ont renvoyé aucune donnée EDHREC — jetons/emblèmes/produits scellés présents dans l'export, nom mal reconnu, carte trop confidentielle pour être indexée, ou simple raté réseau ponctuel. L'app tente automatiquement un repli via Scryfall avant d'abandonner. Relance l'analyse pour écarter l'hypothèse d'un raté réseau.",
       "results.title": "Fiches commandants",
@@ -1039,8 +1055,10 @@
       "owned.all": "Tous les commandants",
       "owned.owned": "Uniquement ceux que je possède déjà",
       "owned.missing": "Uniquement à acheter",
-      "footer.text": "Outil personnel — les requêtes vers EDHREC partent directement de ton navigateur. Aucune donnée de collection n'est stockée ailleurs que dans ton navigateur (IndexedDB).",
+      "footer.text": "Site non officiel, non affilié à Moxfield ni à EDHREC. Outil personnel — les requêtes vers EDHREC partent directement de ton navigateur. Aucune donnée de collection n'est stockée ailleurs que dans ton navigateur (IndexedDB).",
       "preview.hint": "Touche à nouveau la carte pour ouvrir sa page EDHREC ↗",
+      "preview.hintScryfall": "Touche à nouveau la carte pour l'ouvrir sur Scryfall ↗",
+      "preview.notfoundMeta": "{name} · {i} / {n}",
       "preview.prev": "Carte précédente",
       "preview.next": "Carte suivante",
       "theme.toLight": "Thème clair",
@@ -1100,6 +1118,7 @@
       "stat.commanders": "Candidate commanders",
       "stat.ownedCommanders": "Commanders already owned",
       "stat.cache": "Served from cache",
+      "stat.notFound": "Not found on EDHREC",
       "notfound.title": "Cards not found on EDHREC",
       "notfound.body": "These cards returned no EDHREC data — tokens/emblems/sealed products present in the export, a name that wasn't recognized, a card too obscure to be indexed, or a one-off network hiccup. The app automatically tries a Scryfall fallback before giving up. Re-run the analysis to rule out a network hiccup.",
       "results.title": "Commander sheets",
@@ -1111,8 +1130,10 @@
       "owned.all": "All commanders",
       "owned.owned": "Only ones I already own",
       "owned.missing": "Only ones to buy",
-      "footer.text": "Personal tool — requests to EDHREC go straight from your browser. No collection data is stored anywhere other than your browser (IndexedDB).",
+      "footer.text": "Unofficial site, not affiliated with Moxfield or EDHREC. Personal tool — requests to EDHREC go straight from your browser. No collection data is stored anywhere other than your browser (IndexedDB).",
       "preview.hint": "Tap the card again to open its EDHREC page ↗",
+      "preview.hintScryfall": "Tap the card again to open it on Scryfall ↗",
+      "preview.notfoundMeta": "{name} · {i} / {n}",
       "preview.prev": "Previous card",
       "preview.next": "Next card",
       "theme.toLight": "Light theme",
@@ -1207,6 +1228,7 @@
     statCommanders: $("statCommanders"),
     statOwnedCommanders: $("statOwnedCommanders"),
     statCache: $("statCache"),
+    statNotFound: $("statNotFound"),
     notFoundPanel: $("notFoundPanel"),
     notFoundSummary: $("notFoundSummary"),
     notFoundList: $("notFoundList"),
@@ -1327,16 +1349,34 @@
     return -1;
   }
 
-  function slugify(name) {
-    let s = name;
-    // cartes double-face : on ne garde que la face avant
-    s = s.split(" // ")[0];
+  function baseSlugify(s) {
     s = s.normalize("NFD").replace(/[\u0300-\u036f]/g, ""); // accents
     s = s.toLowerCase();
-    s = s.replace(/[',’]/g, "");
+    // apostrophes et points retirés sans être remplacés par un tiret
+    // (ex : "G.F." -> "gf", pas "g-f", pour matcher la convention EDHREC)
+    s = s.replace(/[',’.]/g, "");
     s = s.replace(/[^a-z0-9]+/g, "-");
     s = s.replace(/^-+|-+$/g, "");
     return s;
+  }
+
+  function slugify(name) {
+    // cartes double-face : on ne garde que la face avant pour la clé locale
+    return baseSlugify(name.split(" // ")[0]);
+  }
+
+  // Renvoie les slugs candidats pour une carte, face par face. Utile pour
+  // les cartes double-face / split où EDHREC indexe parfois la seconde
+  // face plutôt que la première (ex : "Welcome to . . . // Jurassic Park"
+  // est référencée sous "jurassic-park").
+  function candidateSlugs(name) {
+    const faces = name.split(" // ");
+    const slugs = [];
+    for (const f of faces) {
+      const s = baseSlugify(f);
+      if (s && !slugs.includes(s)) slugs.push(s);
+    }
+    return slugs.length ? slugs : [baseSlugify(name)];
   }
 
   function parseMoxfieldCsv(text) {
@@ -1405,26 +1445,35 @@
     }
   }
 
-  // Tente la page carte EDHREC via le slug local ; si 404, retombe sur
-  // l'API Scryfall (fuzzy match par nom) pour récupérer le slug EDHREC
-  // exact via related_uris.edhrec, puis réessaie avec ce slug. Corrige
-  // les cas où la normalisation locale du nom diverge de celle d'EDHREC
-  // (ex : cartes Universes Beyond avec ponctuation/casse particulière).
+  // Tente la page carte EDHREC via le slug local (en essayant chaque face
+  // pour les cartes double-face) ; si tout échoue, retombe sur l'API
+  // Scryfall (fuzzy match par nom) pour récupérer le slug EDHREC exact via
+  // related_uris.edhrec, puis réessaie avec ce slug. Corrige les cas où la
+  // normalisation locale du nom diverge de celle d'EDHREC (ponctuation,
+  // casse, ou carte indexée sous son autre face).
   async function fetchCardPage(slug, cardName) {
     const cached = await idbGet(STORE_CARDS, slug);
     if (cached && Date.now() - cached.fetchedAt < CACHE_MAX_AGE_MS) {
       return { data: cached.data, fromCache: true, notFound: cached.notFound || false };
     }
 
-    const direct = await fetchCardPageRaw(slug);
-    if (direct.data) {
-      await idbSet(STORE_CARDS, { slug, data: direct.data, notFound: false, fetchedAt: Date.now() });
-      return { data: direct.data, fromCache: false, notFound: false };
+    const tried = new Set();
+    const candidates = cardName ? candidateSlugs(cardName) : [slug];
+    if (!candidates.includes(slug)) candidates.unshift(slug);
+
+    for (const candidate of candidates) {
+      if (tried.has(candidate)) continue;
+      tried.add(candidate);
+      const direct = await fetchCardPageRaw(candidate);
+      if (direct.data) {
+        await idbSet(STORE_CARDS, { slug, data: direct.data, notFound: false, fetchedAt: Date.now() });
+        return { data: direct.data, fromCache: false, notFound: false };
+      }
     }
 
-    if (direct.notFound && cardName) {
+    if (cardName) {
       const altSlug = await resolveEdhrecSlugViaScryfall(cardName);
-      if (altSlug && altSlug !== slug) {
+      if (altSlug && !tried.has(altSlug)) {
         const alt = await fetchCardPageRaw(altSlug);
         if (alt.data) {
           await idbSet(STORE_CARDS, { slug, data: alt.data, notFound: false, fetchedAt: Date.now(), viaScryfall: true });
@@ -1742,22 +1791,22 @@
   }
 
   function renderNotFoundList(notFoundItems) {
-    lastNotFoundItems = notFoundItems;
     if (notFoundItems.length === 0) {
+      lastNotFoundItems = [];
       els.notFoundPanel.style.display = "none";
       els.notFoundList.innerHTML = "";
       return;
     }
     els.notFoundPanel.style.display = "block";
     els.notFoundSummary.textContent = t("notfound.summary", { n: notFoundItems.length });
-    els.notFoundList.innerHTML = notFoundItems
-      .slice()
-      .sort((a, b) => a.name.localeCompare(b.name))
+    const sorted = notFoundItems.slice().sort((a, b) => a.name.localeCompare(b.name));
+    lastNotFoundItems = sorted;
+    els.notFoundList.innerHTML = sorted
       .map(
-        (it) => `
+        (it, idx) => `
         <li data-slug="${escapeHtml(it.slug)}">
-          <a class="card-hover-link" href="${scryfallSearchUrl(it.name)}" target="_blank" rel="noopener" data-card="${escapeHtml(it.name)}">${escapeHtml(it.name)}</a>
-          <button class="retry-card-btn" type="button" title="${t("retry.title")}" aria-label="${t("retry.title")}">↻</button>
+          <a class="card-hover-link" href="${scryfallSearchUrl(it.name)}" target="_blank" rel="noopener" data-card="${escapeHtml(it.name)}" data-notfound-index="${idx}">${escapeHtml(it.name)}</a>
+          <button class="retry-card-btn" type="button" title="${t("retry.title")}" aria-label="${t("retry.title")}"><span class="retry-icon">↻</span></button>
           <span class="retry-status"></span>
         </li>`
       )
@@ -1779,19 +1828,14 @@
     const { data, notFound } = await fetchCardPage(slug, name);
 
     btn.classList.remove("spinning");
+    btn.blur();
 
     const idx = lastFetchResults.findIndex((r) => r.slug === slug);
     if (idx !== -1) lastFetchResults[idx].data = data;
 
     if (data && !notFound) {
-      li.remove();
-      lastNotFoundItems = lastNotFoundItems.filter((it) => it.slug !== slug);
-      const remaining = els.notFoundList.querySelectorAll("li").length;
-      if (remaining === 0) {
-        els.notFoundPanel.style.display = "none";
-      } else {
-        els.notFoundSummary.textContent = t("notfound.summary", { n: remaining });
-      }
+      renderNotFoundList(lastNotFoundItems.filter((it) => it.slug !== slug));
+      els.statNotFound.textContent = lastNotFoundItems.length;
       // Ré-agrège avec la carte nouvellement trouvée et rafraîchit l'affichage
       allCommanders = aggregate(lastFetchResults, lastMinSample);
       visibleCommanderCount = COMMANDER_PAGE_SIZE;
@@ -1932,6 +1976,7 @@
         els.statCache.textContent = fromCache;
         els.statCommanders.textContent = seenCommanders.size;
         els.statOwnedCommanders.textContent = ownedCommanderSlugs.size;
+        els.statNotFound.textContent = notFoundItems.length;
       }
     );
 
@@ -1943,6 +1988,7 @@
 
     els.statCommanders.textContent = allCommanders.length;
     els.statOwnedCommanders.textContent = ownedCommanderSlugs.size;
+    els.statNotFound.textContent = notFoundItems.length;
     progressStateKey = "progress.done"; els.progressLabel.textContent = t("progress.done");
     els.progressFill.style.width = "100%";
 
@@ -2052,14 +2098,18 @@
   const cardPreviewImg = $("cardPreviewImg");
   const cardPreviewBackdrop = $("cardPreviewBackdrop");
   const cardPreviewMeta = $("cardPreviewMeta");
+  const cardPreviewHint = $("cardPreviewHint");
   const cpPrevBtn = $("cpPrevBtn");
   const cpNextBtn = $("cpNextBtn");
   const supportsHover =
     window.matchMedia && window.matchMedia("(hover: hover) and (pointer: fine)").matches;
   let armedLink = null;
   let currentPreviewUrl = null;
+  let navMode = null; // "commander" | "notfound" | null
   let navCommanderSlug = null;
   let navIndex = -1;
+
+  let previewToken = 0;
 
   function scryfallImageUrl(name) {
     return "https://api.scryfall.com/cards/named?fuzzy=" + encodeURIComponent(name) + "&format=image&version=large";
@@ -2070,10 +2120,24 @@
     cardPreviewFrame.classList.add("loaded");
   });
   cardPreviewImg.addEventListener("error", () => {
-    cardPreviewFrame.classList.add("loaded"); // arrête le spinner même en cas d'échec
+    const token = previewToken;
+    const failedSrc = cardPreviewImg.src;
+    if (!cardPreviewImg.dataset.retried) {
+      // Un survol rapide peut saturer les requêtes vers l'API Scryfall ;
+      // on retente une fois après un court délai avant d'abandonner.
+      cardPreviewImg.dataset.retried = "1";
+      setTimeout(() => {
+        if (token !== previewToken) return; // une autre carte a été survolée entre-temps
+        cardPreviewImg.src = failedSrc;
+      }, 350);
+      return;
+    }
+    cardPreviewFrame.classList.add("loaded"); // arrête le spinner même en cas d'échec définitif
   });
 
   function renderPreviewFor(name, url) {
+    previewToken++;
+    cardPreviewImg.dataset.retried = "";
     cardPreviewImg.classList.remove("loaded");
     cardPreviewFrame.classList.remove("loaded");
     cardPreviewImg.src = scryfallImageUrl(name);
@@ -2082,34 +2146,57 @@
   }
 
   function updatePreviewNavUI() {
-    const commander = navCommanderSlug ? allCommanders.find((c) => c.slug === navCommanderSlug) : null;
-    if (commander && navIndex >= 0) {
-      cardPreview.classList.add("has-nav");
-      cpPrevBtn.disabled = navIndex <= 0;
-      cpNextBtn.disabled = navIndex >= commander.matches.length - 1;
-      const m = commander.matches[navIndex];
-      cardPreviewMeta.innerHTML = t("preview.meta", {
-        name: escapeHtml(m.cardName),
-        lift: '<span class="cp-lift">' + m.lift.toFixed(1) + "</span>",
-        i: navIndex + 1,
-        n: commander.matches.length,
-      });
-    } else {
-      cardPreview.classList.remove("has-nav");
-      cardPreviewMeta.innerHTML = "";
+    cardPreviewHint.textContent = t(navMode === "notfound" ? "preview.hintScryfall" : "preview.hint");
+
+    if (navMode === "commander" && navCommanderSlug && navIndex >= 0) {
+      const commander = allCommanders.find((c) => c.slug === navCommanderSlug);
+      if (commander) {
+        if (!supportsHover) cardPreview.classList.add("has-nav");
+        cpPrevBtn.disabled = navIndex <= 0;
+        cpNextBtn.disabled = navIndex >= commander.matches.length - 1;
+        const m = commander.matches[navIndex];
+        cardPreviewMeta.innerHTML = t("preview.meta", {
+          name: escapeHtml(m.cardName),
+          lift: '<span class="cp-lift">' + m.lift.toFixed(1) + "</span>",
+          i: navIndex + 1,
+          n: commander.matches.length,
+        });
+        return;
+      }
     }
+    if (navMode === "notfound" && navIndex >= 0 && lastNotFoundItems.length) {
+      if (!supportsHover) cardPreview.classList.add("has-nav");
+      cpPrevBtn.disabled = navIndex <= 0;
+      cpNextBtn.disabled = navIndex >= lastNotFoundItems.length - 1;
+      cardPreviewMeta.innerHTML = t("preview.notfoundMeta", {
+        name: escapeHtml(lastNotFoundItems[navIndex].name),
+        i: navIndex + 1,
+        n: lastNotFoundItems.length,
+      });
+      return;
+    }
+    cardPreview.classList.remove("has-nav");
+    cardPreviewMeta.innerHTML = "";
   }
 
   function navigatePreview(delta) {
-    if (!navCommanderSlug || navIndex < 0) return;
-    const commander = allCommanders.find((c) => c.slug === navCommanderSlug);
-    if (!commander) return;
+    if (navIndex < 0) return;
     const newIndex = navIndex + delta;
-    if (newIndex < 0 || newIndex >= commander.matches.length) return;
-    navIndex = newIndex;
-    const m = commander.matches[navIndex];
-    renderPreviewFor(m.cardName, m.cardUrl);
-    updatePreviewNavUI();
+
+    if (navMode === "commander" && navCommanderSlug) {
+      const commander = allCommanders.find((c) => c.slug === navCommanderSlug);
+      if (!commander || newIndex < 0 || newIndex >= commander.matches.length) return;
+      navIndex = newIndex;
+      const m = commander.matches[navIndex];
+      renderPreviewFor(m.cardName, m.cardUrl);
+      updatePreviewNavUI();
+    } else if (navMode === "notfound") {
+      if (newIndex < 0 || newIndex >= lastNotFoundItems.length) return;
+      navIndex = newIndex;
+      const it = lastNotFoundItems[navIndex];
+      renderPreviewFor(it.name, scryfallSearchUrl(it.name));
+      updatePreviewNavUI();
+    }
   }
 
   cpPrevBtn.addEventListener("click", (e) => { e.stopPropagation(); navigatePreview(-1); });
@@ -2124,8 +2211,20 @@
 
   function showCardPreview(link, touchMode) {
     const name = link.dataset.card;
-    navCommanderSlug = link.dataset.commanderSlug || null;
-    navIndex = link.dataset.matchIndex != null ? parseInt(link.dataset.matchIndex, 10) : -1;
+
+    if (link.dataset.commanderSlug) {
+      navMode = "commander";
+      navCommanderSlug = link.dataset.commanderSlug;
+      navIndex = link.dataset.matchIndex != null ? parseInt(link.dataset.matchIndex, 10) : -1;
+    } else if (link.dataset.notfoundIndex != null) {
+      navMode = "notfound";
+      navCommanderSlug = null;
+      navIndex = parseInt(link.dataset.notfoundIndex, 10);
+    } else {
+      navMode = null;
+      navCommanderSlug = null;
+      navIndex = -1;
+    }
 
     renderPreviewFor(name, link.href);
     updatePreviewNavUI();
@@ -2140,6 +2239,7 @@
     cardPreview.classList.remove("show", "touch-mode", "has-nav");
     cardPreviewBackdrop.classList.remove("show", "touch-active");
     armedLink = null;
+    navMode = null;
     navCommanderSlug = null;
     navIndex = -1;
   }
@@ -2147,15 +2247,24 @@
   // Délégation d'événements sur tout le document : les liens de cartes sont
   // recréés dynamiquement à la fois dans les résultats et dans la liste des
   // cartes non trouvées.
+  let hoverTimer = null;
   document.body.addEventListener("mouseover", (e) => {
     if (!supportsHover) return;
     const link = e.target.closest(".card-hover-link");
-    if (link) showCardPreview(link, false);
+    if (!link) return;
+    clearTimeout(hoverTimer);
+    // Petit délai pour éviter de lancer une requête d'image par carte
+    // survolée lors d'un passage rapide de la souris sur toute une liste.
+    hoverTimer = setTimeout(() => showCardPreview(link, false), 100);
   });
   document.body.addEventListener("mouseout", (e) => {
     if (!supportsHover) return;
     const link = e.target.closest(".card-hover-link");
-    if (link) hideCardPreview();
+    if (link) {
+      clearTimeout(hoverTimer);
+      hoverTimer = null;
+      hideCardPreview();
+    }
   });
   document.body.addEventListener("click", (e) => {
     if (supportsHover) return; // souris réelle : le survol suffit, clic = navigation normale
@@ -2209,6 +2318,7 @@
     els.progressLabel.textContent = t(progressStateKey);
     if (allCommanders.length) renderResults();
     if (lastNotFoundItems.length) renderNotFoundList(lastNotFoundItems);
+    if (cardPreview.classList.contains("show")) updatePreviewNavUI();
   }
   langToggle.addEventListener("click", () => {
     currentLang = currentLang === "en" ? "fr" : "en";
